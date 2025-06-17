@@ -71,7 +71,7 @@ function App() {
                   element={<Profile />}
                 />
                 <Route path="create-car" element={<CreateCar />} />
-                <Route path="chat" element={<Chat />} />
+                {/* <Route path="chat" element={<Chat />} /> */}
               </Route>
             {/* </Route> */}
 
@@ -80,7 +80,7 @@ function App() {
             <Route path="/support" element={<SupportLayout />}>
               <Route index element={<DashboardHome />} />
               <Route path="tickets" element={<Tickets />} />
-              <Route path="chat" element={<Chat />} />
+              {/* <Route path="chat" element={<Chat />} /> */}
               <Route path="vehicles" element={<Vehicles />} />
               <Route
                 path="settings"

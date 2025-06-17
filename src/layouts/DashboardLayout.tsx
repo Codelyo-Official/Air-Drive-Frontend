@@ -63,8 +63,8 @@ const DashboardLayout = () => {
         {/* Dashboard Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-
+            <h1 className="text-2xl font-semibold text-gray-900 hidden md:flex">Dashboard</h1>
+ <h1 className="text-2xl font-semibold text-gray-900 flex md:hidden"></h1>
             {/* User menu */}
             <div className="relative" ref={dropdownRef}>
               <div className="flex items-center space-x-4">
