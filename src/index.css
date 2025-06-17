@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  --radius: 8px; 
+
+  /* Light Theme Colors (Default) */
+  --background: 0 0% 100%; /* White */
+  --foreground: 222.2 84% 4.9%; /* Near cream */
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  --primary: 222.2 47.4% 11.2%; /* Dark Blue/Gray */
+  --primary-foreground: 210 40% 98%; /* Off-white */
+
+  --secondary: 210 40% 96%; /* Light Gray */
+  --secondary-foreground: 222.2 84% 4.9%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%; /* Medium Gray */
+
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+
+  --destructive: 0 84.2% 60.2%; /* Red */
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%; /* Light Gray Border */
+  --input: 214.3 31.8% 91.4%; /* Light Gray Input */
+  --ring: 222.2 84% 4.9%; /* Near cream Ring */
+}
+
+/* Dark Theme Colors (Your Orange Scheme) */
+.dark {
+  --background: 220 27% 6%; /* Very dark background (from your config) */
+  --foreground: 210 40% 95%; /* Light text (from your config) */
+
+  --card: 220 27% 8%; /* Dark card background */
+  --card-foreground: 210 40% 95%;
+
+  --popover: 220 27% 8%; /* Dark popover background */
+  --popover-foreground: 210 40% 95%;
+
+  --primary: 25 95% 53%; /* Your main orange */
+  --primary-foreground: 220 27% 6%; /* Dark text on orange */
+
+  --secondary: 210 40% 12%; /* Dark secondary (from your config) */
+  --secondary-foreground: 210 40% 95%;
+
+  --muted: 210 40% 10%; /* Very muted dark (from your config) */
+  --muted-foreground: 210 40% 65%; /* Muted light text */
+
+  --accent: 210 40% 15%; /* Subtle accent dark (from your config) */
+  --accent-foreground: 210 40% 95%;
+
+  --destructive: 0 84% 45%; /* Dark red for errors (from your config) */
+  --destructive-foreground: 210 40% 95%;
+
+  --border: 210 40% 15%; /* Dark gray border (from your config) */
+  --input: 210 40% 12%; /* Dark input background (from your config) */
+  --ring: 25 95% 53%; /* Orange ring color (from your config) */
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    /* These apply to both light and dark themes based on the CSS variables */
+    @apply antialiased;
+    font-family: 'Poppins', sans-serif;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    /* These will adapt based on the foreground color */
+    @apply text-gray-900; /* This will be overridden by hsl(var(--foreground)) in dark mode */
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn {
+    @apply rounded-md px-4 py-2 font-medium;
+  }
+}
+
+* {
+  border-color: hsl(var(--border));
+}
