@@ -113,6 +113,20 @@ const Header: React.FC<HeaderProps> = ({ isScrolled }) => {
               >
                 Find cars
               </Link>
+               <Link
+                to="/dashboard"
+                className="text-white hover:text-amber-500 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+               <Link
+                to="/support"
+                className="text-white hover:text-amber-500 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Support
+              </Link>
               <Link
                 to="/rent-your-car"
                 className="text-white hover:text-amber-500 font-medium"

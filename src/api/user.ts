@@ -21,22 +21,26 @@ export const useUsers = () => {
     queryKey: ["userProfile"],
     queryFn: async () => {
       const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("No auth token found");
+      // if (!token) throw new Error("No auth token found");
 
-      const response = await fetch(`${API_BASE_URL}/api/profile/`, {
-        method: "GET",
-        headers: {
-          Authorization: `Token ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      // const response = await fetch(`${API_BASE_URL}/api/profile/`, {
+      //   method: "GET",
+      //   headers: {
+      //     Authorization: `Token ${token}`,
+      //     "Content-Type": "application/json",
+      //   },
+      // });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch user profile");
+      // if (!response.ok) {
+      //   throw new Error("Failed to fetch user profile");
+      // }
+
+      // const data = await response.json();
+      // return data;
+      return {
+        id: 1,
+        username: "john_doe",
       }
-
-      const data = await response.json();
-      return data;
     },
     retry: false,
   });
