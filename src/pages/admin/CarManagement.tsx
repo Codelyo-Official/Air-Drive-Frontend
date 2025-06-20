@@ -1,4 +1,7 @@
-import { useState, useEffect } from "react"
+"use client"
+
+import { useEffect, useState } from "react"
+import { toast } from "react-toastify"
 import { useAdminCars } from "../../api/admin/adminCarApproval"
 
 interface AdminCar {
@@ -41,6 +44,24 @@ const CarManagement = () => {
   const [selectedCar, setSelectedCar] = useState<AdminCar | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState<AdminCar | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState<AdminCar | null>(null)
+  const [editingCar, setEditingCar] = useState<AdminCar | null>(null)
+  const [editForm, setEditForm] = useState({
+    status: "",
+    make: "",
+    model: "",
+    year: "",
+    color: "",
+    license_plate: "",
+    description: "",
+    daily_rate: "",
+    location: "",
+    latitude: "",
+    longitude: "",
+    seats: "",
+    transmission: "",
+    fuel_type: "",
+    auto_approve_bookings: false,
+  })
 
   // Fetch cars with current filters
   const { data: cars, isLoading, error, refetch } = useAdminCarsList(filters)
@@ -61,7 +82,7 @@ const CarManagement = () => {
     return () => clearTimeout(timeoutId)
   }, [filters.search, refetch])
 
-  // Handle car status update
+  // Handle car status update (quick action)
   const handleStatusUpdate = (car: AdminCar, newStatus: "pending" | "available" | "rejected") => {
     updateCar.mutate({
       car_id: car.id,
@@ -92,6 +113,93 @@ const CarManagement = () => {
       owner_id: undefined,
       search: "",
     })
+  }
+
+  // Start editing car - populate form with current values
+  const startEdit = (car: AdminCar) => {
+    setEditingCar(car)
+    setEditForm({
+      status: car.status,
+      make: car.make,
+      model: car.model,
+      year: String(car.year),
+      color: car.color,
+      license_plate: car.license_plate,
+      description: car.description,
+      daily_rate: car.daily_rate,
+      location: car.location,
+      latitude: String(car.latitude),
+      longitude: String(car.longitude),
+      seats: String(car.seats),
+      transmission: car.transmission,
+      fuel_type: car.fuel_type,
+      auto_approve_bookings: car.auto_approve_bookings,
+    })
+  }
+
+  // Cancel editing
+  const cancelEdit = () => {
+    setEditingCar(null)
+    setEditForm({
+      status: "",
+      make: "",
+      model: "",
+      year: "",
+      color: "",
+      license_plate: "",
+      description: "",
+      daily_rate: "",
+      location: "",
+      latitude: "",
+      longitude: "",
+      seats: "",
+      transmission: "",
+      fuel_type: "",
+      auto_approve_bookings: false,
+    })
+  }
+
+  // Save car changes - only send changed fields
+  const saveCar = () => {
+    if (!editingCar) return
+
+    // Create updates object with only changed fields
+    const updates: any = {}
+
+    if (editForm.status !== editingCar.status) updates.status = editForm.status
+    if (editForm.make !== editingCar.make) updates.make = editForm.make
+    if (editForm.model !== editingCar.model) updates.model = editForm.model
+    if (editForm.year !== String(editingCar.year)) updates.year = Number(editForm.year)
+    if (editForm.color !== editingCar.color) updates.color = editForm.color
+    if (editForm.license_plate !== editingCar.license_plate) updates.license_plate = editForm.license_plate
+    if (editForm.description !== editingCar.description) updates.description = editForm.description
+    if (editForm.daily_rate !== editingCar.daily_rate) updates.daily_rate = editForm.daily_rate
+    if (editForm.location !== editingCar.location) updates.location = editForm.location
+    if (editForm.latitude !== String(editingCar.latitude)) updates.latitude = Number(editForm.latitude)
+    if (editForm.longitude !== String(editingCar.longitude)) updates.longitude = Number(editForm.longitude)
+    if (editForm.seats !== String(editingCar.seats)) updates.seats = Number(editForm.seats)
+    if (editForm.transmission !== editingCar.transmission) updates.transmission = editForm.transmission
+    if (editForm.fuel_type !== editingCar.fuel_type) updates.fuel_type = editForm.fuel_type
+    if (editForm.auto_approve_bookings !== editingCar.auto_approve_bookings)
+      updates.auto_approve_bookings = editForm.auto_approve_bookings
+
+    // Only proceed if there are changes
+    if (Object.keys(updates).length === 0) {
+      toast.error("No changes detected")
+      return
+    }
+
+    updateCar.mutate(
+      {
+        car_id: editingCar.id,
+        updates: updates,
+      },
+      {
+        onSuccess: () => {
+          cancelEdit()
+        },
+      },
+    )
   }
 
   // Get status badge styling
@@ -170,7 +278,7 @@ const CarManagement = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             >
               <option value="">All Status</option>
-              <option value="pending">Pending</option>
+              <option value="pending_approval">Pending</option>
               <option value="available">Available</option>
               <option value="rejected">Rejected</option>
             </select>
@@ -262,61 +370,238 @@ const CarManagement = () => {
 
               {/* Action Buttons */}
               <div className="space-y-2">
-                {/* Status Update Buttons */}
-                {car.status === "pending" && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleStatusUpdate(car, "available")}
-                      disabled={updateCar.isPending}
-                      className="flex-1 bg-green-100 text-green-800 px-3 py-2 rounded-md hover:bg-green-200 disabled:opacity-50 transition-colors text-sm font-medium"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleStatusUpdate(car, "rejected")}
-                      disabled={updateCar.isPending}
-                      className="flex-1 bg-red-100 text-red-800 px-3 py-2 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors text-sm font-medium"
-                    >
-                      Reject
-                    </button>
+                {/* Quick Status Update Buttons */}
+                {editingCar?.id !== car.id && (
+                  <>
+                    {car.status === "pending" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleStatusUpdate(car, "available")}
+                          disabled={updateCar.isPending}
+                          className="flex-1 bg-green-100 text-green-800 px-3 py-2 rounded-md hover:bg-green-200 disabled:opacity-50 transition-colors text-sm font-medium"
+                        >
+                          {updateCar.isPending ? "Updating..." : "Approve"}
+                        </button>
+                        <button
+                          onClick={() => handleStatusUpdate(car, "rejected")}
+                          disabled={updateCar.isPending}
+                          className="flex-1 bg-red-100 text-red-800 px-3 py-2 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors text-sm font-medium"
+                        >
+                          {updateCar.isPending ? "Updating..." : "Reject"}
+                        </button>
+                      </div>
+                    )}
+
+                    {car.status === "available" && (
+                      <button
+                        onClick={() => handleStatusUpdate(car, "rejected")}
+                        disabled={updateCar.isPending}
+                        className="w-full bg-red-100 text-red-800 px-3 py-2 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors text-sm font-medium"
+                      >
+                        {updateCar.isPending ? "Updating..." : "Reject"}
+                      </button>
+                    )}
+
+                    {car.status === "rejected" && (
+                      <button
+                        onClick={() => handleStatusUpdate(car, "available")}
+                        disabled={updateCar.isPending}
+                        className="w-full bg-green-100 text-green-800 px-3 py-2 rounded-md hover:bg-green-200 disabled:opacity-50 transition-colors text-sm font-medium"
+                      >
+                        {updateCar.isPending ? "Updating..." : "Approve"}
+                      </button>
+                    )}
+
+                    {/* Secondary Actions */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEdit(car)}
+                        className="flex-1 bg-blue-100 text-blue-800 px-3 py-2 rounded-md hover:bg-blue-200 transition-colors text-sm font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setShowDetailsModal(car)}
+                        className="flex-1 bg-purple-100 text-purple-800 px-3 py-2 rounded-md hover:bg-purple-200 transition-colors text-sm font-medium"
+                      >
+                        Details
+                      </button>
+                      <button
+                        onClick={() => handleDelete(car)}
+                        className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* Full Edit Form */}
+                {editingCar?.id === car.id && (
+                  <div className="space-y-3 p-3 bg-gray-50 rounded-md">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                        <select
+                          value={editForm.status}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="available">Available</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Daily Rate</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editForm.daily_rate}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, daily_rate: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Make</label>
+                        <input
+                          type="text"
+                          value={editForm.make}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, make: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Model</label>
+                        <input
+                          type="text"
+                          value={editForm.model}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, model: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Year</label>
+                        <input
+                          type="number"
+                          value={editForm.year}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, year: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
+                        <input
+                          type="text"
+                          value={editForm.color}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, color: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">License Plate</label>
+                        <input
+                          type="text"
+                          value={editForm.license_plate}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, license_plate: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Seats</label>
+                        <input
+                          type="number"
+                          value={editForm.seats}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, seats: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Transmission</label>
+                        <select
+                          value={editForm.transmission}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, transmission: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="Automatic">Automatic</option>
+                          <option value="Manual">Manual</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Fuel Type</label>
+                        <select
+                          value={editForm.fuel_type}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, fuel_type: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="Petrol">Petrol</option>
+                          <option value="Diesel">Diesel</option>
+                          <option value="Electric">Electric</option>
+                          <option value="Hybrid">Hybrid</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Location</label>
+                      <input
+                        type="text"
+                        value={editForm.location}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                      <textarea
+                        value={editForm.description}
+                        onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                        rows={2}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="flex items-center text-xs">
+                        <input
+                          type="checkbox"
+                          checked={editForm.auto_approve_bookings}
+                          onChange={(e) =>
+                            setEditForm((prev) => ({ ...prev, auto_approve_bookings: e.target.checked }))
+                          }
+                          className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        Auto Approve Bookings
+                      </label>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveCar}
+                        disabled={updateCar.isPending}
+                        className="flex-1 bg-green-100 text-green-800 px-3 py-2 rounded-md hover:bg-green-200 disabled:opacity-50 transition-colors text-sm font-medium"
+                      >
+                        {updateCar.isPending ? "Saving..." : "Save Changes"}
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 )}
-
-                {car.status === "available" && (
-                  <button
-                    onClick={() => handleStatusUpdate(car, "rejected")}
-                    disabled={updateCar.isPending}
-                    className="w-full bg-red-100 text-red-800 px-3 py-2 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors text-sm font-medium"
-                  >
-                    Reject
-                  </button>
-                )}
-
-                {car.status === "rejected" && (
-                  <button
-                    onClick={() => handleStatusUpdate(car, "available")}
-                    disabled={updateCar.isPending}
-                    className="w-full bg-green-100 text-green-800 px-3 py-2 rounded-md hover:bg-green-200 disabled:opacity-50 transition-colors text-sm font-medium"
-                  >
-                    Approve
-                  </button>
-                )}
-
-                {/* Secondary Actions */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowDetailsModal(car)}
-                    className="flex-1 bg-blue-100 text-blue-800 px-3 py-2 rounded-md hover:bg-blue-200 transition-colors text-sm font-medium"
-                  >
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => handleDelete(car)}
-                    className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
-                  >
-                    Delete
-                  </button>
-                </div>
               </div>
             </div>
           </div>
