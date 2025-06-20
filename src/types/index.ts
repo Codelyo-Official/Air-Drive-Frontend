@@ -2,6 +2,7 @@ import type React from "react"
 export interface User {
   name: string
   email: string
+  user_type: string
   avatar?: string
 }
 

@@ -32,6 +32,13 @@ import Settings from './pages/support/Profile';
 import Tickets from './pages/support/Tickets';
 import Vehicles from './pages/support/Vehicles';
 import TanstackProvider from './providers/TanstackProvider';
+import AdminLayout from './layouts/AdminLayout';
+import UserManagement from './pages/admin/UserManagement';
+import CarManagement from './pages/admin/CarManagement';
+import BookingManagement from './pages/admin/BookingManagement';
+import Revenue from './pages/admin/Revenue';
+import ReportManagement from './pages/admin/ReportManagement';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -71,7 +78,6 @@ function App() {
                   element={<Profile />}
                 />
                 <Route path="create-car" element={<CreateCar />} />
-                {/* <Route path="chat" element={<Chat />} /> */}
               </Route>
             {/* </Route> */}
 
@@ -80,12 +86,21 @@ function App() {
             <Route path="/support" element={<SupportLayout />}>
               <Route index element={<DashboardHome />} />
               <Route path="tickets" element={<Tickets />} />
-              {/* <Route path="chat" element={<Chat />} /> */}
               <Route path="vehicles" element={<Vehicles />} />
               <Route
                 path="settings"
                 element={<Settings user={{ name: 'John Doe', email: 'john@example.com', avatar: '' }} />}
               />
+            </Route>
+
+              {/* Support Dashboard Routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="user-management" element={<UserManagement />} />
+              <Route path="car-management" element={<CarManagement />} />
+              <Route path="booking-management" element={<BookingManagement />} />
+              <Route path="revenue" element={<Revenue />} />
+              <Route path="report-management" element={<ReportManagement />} />
             </Route>
 
             {/* 404 Page */}
