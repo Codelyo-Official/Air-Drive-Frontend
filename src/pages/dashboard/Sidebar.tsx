@@ -144,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogo
       >
         {/* Logo */}
         <Link to="/">
-          <div className="p-4 sm:p-6 border-b border-gray-200">
+          <div className="p-4 sm:p-6 border-b border-gray-200 bg-black">
             <div className="flex items-center justify-center">
               <img
                 src="/air_drive_logo.PNG"

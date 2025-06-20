@@ -33,11 +33,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand Section */}
           <div className="lg:col-span-2">
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center mr-3">
-                <div className="w-6 h-6 bg-white rounded-sm"></div>
-              </div>
-              <span className="text-amber-400 font-bold text-2xl">Air Drive</span>
+            <div className="flex items-center mb-6 gap-3">
+              <Link to="/" className="flex items-center">
+                <img
+                  src="/air_drive_logo.PNG"
+                  alt="Air Drive Logo"
+                  className="h-16 w-auto"
+                />
+              </Link>
+              <span className="text-amber-400 font-bold text-2xl">AIRDRIVE</span>
             </div>
             <p className="text-gray-300 mb-6 max-w-sm">
               The most trusted car sharing platform. Connect with car owners and drivers in your community for safe,
