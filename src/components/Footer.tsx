@@ -1,11 +1,10 @@
 
-import { Instagram, Facebook, Twitter, Mail, Phone, MapPin, ArrowRight } from "lucide-react"
-import { Link } from "react-router-dom"
+import { ArrowRight, Facebook, Instagram, Mail, MapPin, Phone, Twitter } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-      {/* Newsletter Section */}
       <div className="border-b border-gray-700">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto text-center">
@@ -33,11 +32,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand Section */}
           <div className="lg:col-span-2">
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center mr-3">
-                <div className="w-6 h-6 bg-white rounded-sm"></div>
-              </div>
-              <span className="text-amber-400 font-bold text-2xl">Air Drive</span>
+            <div className="flex items-center mb-6 gap-3">
+              <Link to="/" className="flex items-center">
+                <img
+                  src="/air_drive_logo.PNG"
+                  alt="Air Drive Logo"
+                  className="h-16 w-auto"
+                />
+              </Link>
+              <span className="text-amber-400 font-bold text-2xl">AIRDRIVE</span>
             </div>
             <p className="text-gray-300 mb-6 max-w-sm">
               The most trusted car sharing platform. Connect with car owners and drivers in your community for safe,
@@ -90,42 +93,20 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-6 text-white">For Drivers</h3>
             <ul className="space-y-3">
-              <li>
-                <Link
-                  to="/search"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Find Cars
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                Find Cars
               </li>
-              <li>
-                <Link
-                  to="/how-it-works"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  How It Works
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                How It Works
               </li>
-              <li>
-                <Link
-                  to="/pricing"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Pricing
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                Pricing
               </li>
-              <li>
-                <Link
-                  to="/insurance"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Insurance
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                Insurance
               </li>
-              <li>
-                <Link to="/help" className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
-                  Help Center
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                Help Center
               </li>
             </ul>
           </div>
@@ -134,45 +115,20 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-6 text-white">For Car Owners</h3>
             <ul className="space-y-3">
-              <li>
-                <Link
-                  to="/rent-your-car"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  List Your Car
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                List Your Car
               </li>
-              <li>
-                <Link
-                  to="/earnings"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Earnings Calculator
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                Earnings Calculator
               </li>
-              <li>
-                <Link
-                  to="/owner-protection"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Owner Protection
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                Owner Protection
               </li>
-              <li>
-                <Link
-                  to="/owner-faq"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Owner FAQ
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                Owner FAQ
               </li>
-              <li>
-                <Link
-                  to="/community"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Community
-                </Link>
+              <li className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm">
+                Community
               </li>
             </ul>
           </div>
@@ -187,22 +143,6 @@ export default function Footer() {
                   className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
                 >
                   About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/careers"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Careers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/press"
-                  className="text-gray-300 hover:text-amber-400 transition-colors duration-200 text-sm"
-                >
-                  Press
                 </Link>
               </li>
               <li>

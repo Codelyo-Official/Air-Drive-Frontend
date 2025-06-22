@@ -6,49 +6,78 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface Car {
   id: number;
-  name: string;
+  make: string;
   model: string;
-  brand: string;
   year: number;
-  // Add more fields if needed
+  color: string;
+  license_plate: string;
+  description: string;
+  daily_rate: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  seats: number;
+  transmission: string;
+  fuel_type: string;
+  status: string;
+  auto_approve_bookings: boolean;
 }
 
-interface CreateCarResponse {
-  id: number;
-  // Add other car fields you receive in response
-}
-
-interface CarImagePayload {
-  car: number;
-  image: File;
+interface CarImage {
+  image: string;
   is_primary: boolean;
 }
 
-interface CarFeaturePayload {
-  car: number;
+interface CarFeature {
   name: string;
 }
 
-interface CarAvailabilityPayload {
-  car: number;
-  start_date: string;
-  end_date: string;
+interface CarAvailability {
+  start_date: string; 
+  end_date: string; 
+}
+
+interface CreateCarPayload {
+  owner: number;
+  make: string;
+  model: string;
+  year: number;
+  color: string;
+  license_plate: string;
+  description: string;
+  daily_rate: number;
+  location: string;
+  latitude: number;
+  longitude: number;
+  seats: number;
+  transmission: string;
+  fuel_type: string;
+  status: string;
+  auto_approve_bookings: boolean;
+  images: CarImage[];
+  features: CarFeature[];
+  availability: CarAvailability[];
+}
+
+interface CreateCarResponse {
+  message: string;
 }
 
 export const useCar = () => {
   const queryClient = useQueryClient();
 
-  // Create Car
-  const createCar = useMutation<CreateCarResponse, Error, FormData>({
-    mutationFn: async (formData) => {
+  // Create Car with all nested data
+  const createCar = useMutation<CreateCarResponse, Error, CreateCarPayload>({
+    mutationFn: async (payload) => {
       const token = localStorage.getItem("authToken");
 
-      const response = await fetch(`${API_BASE_URL}/api/car-create/`, {
+      const response = await fetch(`${API_BASE_URL}/api/create/`, {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Token ${token}`,
         },
-        body: formData,
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -62,96 +91,10 @@ export const useCar = () => {
     },
     onSuccess: () => {
       toast.success("Car created successfully!");
-      queryClient.invalidateQueries(["ownerCars"]);
+      queryClient.invalidateQueries({ queryKey: ["ownerCars"] });
     },
     onError: (error) => {
       console.error("Create Car Error:", error);
-      toast.error(error.message);
-    },
-  });
-
-  // Add Car Image
-  const addCarImage = useMutation<void, Error, FormData>({
-    mutationFn: async (formData) => {
-      const token = localStorage.getItem("authToken");
-
-      const response = await fetch(`${API_BASE_URL}/api/car-images/`, {
-        method: "POST",
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        const errorMsg = Object.values(data)?.[0]?.[0] || "Image upload failed.";
-        throw new Error(errorMsg);
-      }
-    },
-    onSuccess: () => {
-      toast.success("Car image added successfully!");
-    },
-    onError: (error) => {
-      console.error("Add Car Image Error:", error);
-      toast.error(error.message);
-    },
-  });
-
-  // Add Car Feature
-  const addCarFeature = useMutation<void, Error, CarFeaturePayload>({
-    mutationFn: async (payload) => {
-      const token = localStorage.getItem("authToken");
-
-      const response = await fetch(`${API_BASE_URL}/api/car-features/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        const errorMsg = Object.values(data)?.[0]?.[0] || "Adding feature failed.";
-        throw new Error(errorMsg);
-      }
-    },
-    onSuccess: () => {
-      toast.success("Car feature added successfully!");
-    },
-    onError: (error) => {
-      console.error("Add Car Feature Error:", error);
-      toast.error(error.message);
-    },
-  });
-
-  // Add Car Availability
-  const addCarAvailability = useMutation<void, Error, CarAvailabilityPayload>({
-    mutationFn: async (payload) => {
-      const token = localStorage.getItem("authToken");
-
-      const response = await fetch(`${API_BASE_URL}/api/car-availability/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Token ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        const errorMsg = Object.values(data)?.[0]?.[0] || "Adding availability failed.";
-        throw new Error(errorMsg);
-      }
-    },
-    onSuccess: () => {
-      toast.success("Car availability added!");
-    },
-    onError: (error) => {
-      console.error("Add Car Availability Error:", error);
       toast.error(error.message);
     },
   });
@@ -180,11 +123,78 @@ export const useCar = () => {
     });
   };
 
+  // Get Available Cars
+  const useAvailableCars = () => {
+    return useQuery<Car[], Error>({
+      queryKey: ["availableCars"],
+      queryFn: async () => {
+        const token = localStorage.getItem("authToken");
+
+        const response = await fetch(`${API_BASE_URL}/api/available-cars/`, {
+          headers: {
+            Authorization: `Token ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          const errorMsg = data?.detail || "Failed to fetch available cars.";
+          throw new Error(errorMsg);
+        }
+
+        return response.json();
+      },
+    });
+  };
+
   return {
     createCar,
-    addCarImage,
-    addCarFeature,
-    addCarAvailability,
     useOwnerCars,
+    useAvailableCars,
+  };
+};
+
+// Helper function to create the payload structure
+export const createCarPayload = (carData: {
+  owner: number;
+  make: string;
+  model: string;
+  year: number;
+  color: string;
+  license_plate: string;
+  description: string;
+  daily_rate: number;
+  location: string;
+  latitude: number;
+  longitude: number;
+  seats: number;
+  transmission: string;
+  fuel_type: string;
+  status?: string;
+  auto_approve_bookings?: boolean;
+  images?: CarImage[];
+  features?: CarFeature[];
+  availability?: CarAvailability[];
+}): CreateCarPayload => {
+  return {
+    owner: carData.owner,
+    make: carData.make,
+    model: carData.model,
+    year: carData.year,
+    color: carData.color,
+    license_plate: carData.license_plate,
+    description: carData.description,
+    daily_rate: carData.daily_rate,
+    location: carData.location,
+    latitude: carData.latitude,
+    longitude: carData.longitude,
+    seats: carData.seats,
+    transmission: carData.transmission,
+    fuel_type: carData.fuel_type,
+    status: carData.status || "pending_approval",
+    auto_approve_bookings: carData.auto_approve_bookings || false,
+    images: carData.images || [],
+    features: carData.features || [],
+    availability: carData.availability || [],
   };
 };

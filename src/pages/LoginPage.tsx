@@ -1,11 +1,13 @@
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, User } from "lucide-react"
 import type React from "react"
 import { useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../api/auth"
+import { getRoleBasedRedirect } from "../utils/roleRedirect"
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useAuth()
 
   const [username, setUsername] = useState("")
@@ -32,10 +34,28 @@ const LoginPage: React.FC = () => {
 
     try {
       const formData = new FormData()
-      formData.append('username', username.trim())
-      formData.append('password', password)
-      await login.mutateAsync(formData)
-      navigate("/dashboard")
+      formData.append("username", username.trim())
+      formData.append("password", password)
+
+      const result = await login.mutateAsync(formData)
+
+      // Get the redirect path based on user role
+      const redirectPath = getRoleBasedRedirect(result.user.user_type)
+
+      // Check if there's a previous location to redirect to
+      const from = location.state?.from?.pathname
+
+      // Only redirect to 'from' if the user has access to that route
+      if (from && from !== "/login") {
+        const { canAccessRoute } = await import("../utils/roleRedirect")
+        if (canAccessRoute(result.user.user_type, from)) {
+          navigate(from, { replace: true })
+          return
+        }
+      }
+
+      // Otherwise, redirect to role-based default
+      navigate(redirectPath, { replace: true })
     } catch (error: unknown) {
       console.error("Login failed:", error)
       const errorMessage = error instanceof Error ? error.message : "Login failed. Please try again."

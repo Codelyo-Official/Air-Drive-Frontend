@@ -1,40 +1,62 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom"
 
 // Layouts
-import DashboardLayout from './layouts/DashboardLayout';
-import MainLayout from './layouts/MainLayout';
-import SupportLayout from './layouts/SupportLayout';
+import AdminLayout from "./layouts/AdminLayout"
+import DashboardLayout from "./layouts/DashboardLayout"
+import MainLayout from "./layouts/MainLayout"
+import SupportLayout from "./layouts/SupportLayout"
 
 // Pages
-import CarDetailPage from './pages/CarDetailPage';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import NotFoundPage from './pages/NotFoundPage';
-import RentYourCarPage from './pages/RentYourCarPage';
-import SearchPage from './pages/SearchPage';
-import SignupPage from './pages/SignupPage';
+import CarDetailPage from "./pages/CarDetailPage"
+import HomePage from "./pages/HomePage"
+import LoginPage from "./pages/LoginPage"
+import NotFoundPage from "./pages/NotFoundPage"
+import RentYourCarPage from "./pages/RentYourCarPage"
+import SearchPage from "./pages/SearchPage"
+import SignupPage from "./pages/SignupPage"
+// import AboutPage from "./pages/AboutPage"
+import AboutPage from "./components/AboutPage"
+import BlogPage from "./components/BlogPage"
+import ContactPage from "./components/ContactPage"
+import ProfilePage from "./components/ProfilePage"
 
 // Dashboard Pages
-import Analytics from './pages/dashboard/Analytics';
-import CarList from './pages/dashboard/CarList';
-import Chat from './pages/dashboard/Chat';
-import CreateCar from './pages/dashboard/CreateCar';
-import DashboardHome from './pages/dashboard/Dashboard';
-import Profile from './pages/dashboard/Profile';
+import Analytics from "./pages/dashboard/Analytics"
+import CarList from "./pages/dashboard/CarList"
+import Chat from "./pages/dashboard/Chat"
+import CreateCar from "./pages/dashboard/CreateCar"
+import DashboardHome from "./pages/dashboard/Dashboard"
+// import Profile from "./pages/dashboard/Profile"
 
 // Support Pages
-import { ToastContainer } from 'react-toastify';
-import ProtectedRoute from './components/ProtectedRoute';
-// import PublicRoute from './components/PublicRoute';
-import Settings from './pages/support/Profile';
-import Tickets from './pages/support/Tickets';
-import Vehicles from './pages/support/Vehicles';
-import TanstackProvider from './providers/TanstackProvider';
+// import Settings from "./pages/support/Profile"
+import Tickets from "./pages/support/Tickets"
+import Vehicles from "./pages/support/Vehicles"
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard"
+import BookingManagement from "./pages/admin/BookingManagement"
+import CarManagement from "./pages/admin/CarManagement"
+import ReportManagement from "./pages/admin/ReportManagement"
+import Revenue from "./pages/admin/Revenue"
+import UserManagement from "./pages/admin/UserManagement"
+
+// Components
+import ProtectedRoute from "./components/ProtectedRoute"
+import PublicRoute from "./components/PublicRoute"
+import TanstackProvider from "./providers/TanstackProvider"
+
+import { ToastContainer } from "react-toastify"
+{/* Legal Pages */ }
+import AccessibilityPage from "./components/AccessibilityPage"
+import CookiePage from "./components/CookiePage"
+import PrivacyPage from "./components/PrivacyPage"
+import TermsPage from "./components/TermsPage"
 
 // Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient()
 
 function App() {
   return (
@@ -42,50 +64,91 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <Router>
           <Routes>
-            {/* Main Website Routes */}
-            {/* Public Routes */}
-            {/* <Route element={<PublicRoute />}> */}
+            {/* Public Routes - Only accessible when not logged in */}
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+            </Route>
+
+            {/* Main Website Routes - Accessible to all authenticated users */}
             <Route path="/" element={<MainLayout />}>
-              {/* <Route index element={<Navigate to="/login" />} /> */}
               <Route index element={<HomePage />} />
-
-              <Route path="login" element={<LoginPage />} />
-              <Route path="signup" element={<SignupPage />} />
-              {/* </Route> */}
-
-
               <Route path="home" element={<HomePage />} />
               <Route path="search" element={<SearchPage />} />
               <Route path="cars/:carId" element={<CarDetailPage />} />
-              <Route path="rent-your-car" element={<RentYourCarPage />} />
+              <Route path="about" element={<AboutPage />} />
+              <Route path="blog" element={<BlogPage />} />
+              <Route path="contact" element={<ContactPage />} />
+              <Route path="profiles" element={<ProfilePage />} />
+
+              {/* Legal Pages */}
+              <Route path="terms" element={<TermsPage />} />
+              <Route path="privacy" element={<PrivacyPage />} />
+              <Route path="cookies" element={<CookiePage />} />
+              <Route path="accessibility" element={<AccessibilityPage />} />
+
+              {/* Rent your car - only for owners and admins */}
+              <Route
+                path="rent-your-car"
+                element={
+                  <ProtectedRoute allowedRoles={["regular"]}>
+                    <RentYourCarPage />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
 
-            {/* Dashboard Routes */}
-            {/* <Route element={<ProtectedRoute />}> */}
-              <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route index element={<DashboardHome />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="car-list" element={<CarList />} />
-                <Route
-                  path="profile"
-                  element={<Profile />}
-                />
-                <Route path="create-car" element={<CreateCar />} />
-                {/* <Route path="chat" element={<Chat />} /> */}
-              </Route>
-            {/* </Route> */}
+            {/* Dashboard Routes - Only for owners and admins */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["owner", "admin"]}>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardHome />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="car-list" element={<CarList />} />
+              <Route path="profiles" element={<ProfilePage />} />
+              <Route path="create-car" element={<CreateCar />} />
+              <Route path="chat" element={<Chat />} />
+            </Route>
 
-
-            {/* Support Dashboard Routes */}
-            <Route path="/support" element={<SupportLayout />}>
+            {/* Support Dashboard Routes - Only for owners and admins */}
+            <Route
+              path="/support"
+              element={
+                <ProtectedRoute allowedRoles={["owner", "admin"]}>
+                  <SupportLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route index element={<DashboardHome />} />
               <Route path="tickets" element={<Tickets />} />
-              {/* <Route path="chat" element={<Chat />} /> */}
               <Route path="vehicles" element={<Vehicles />} />
-              <Route
+              {/* <Route
                 path="settings"
-                element={<Settings user={{ name: 'John Doe', email: 'john@example.com', avatar: '' }} />}
-              />
+                element={<Settings user={{ name: "John Doe", email: "john@example.com", avatar: "" }} />}
+              /> */}
+            </Route>
+
+            {/* Admin Routes - Only for admins */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="user-management" element={<UserManagement />} />
+              <Route path="car-management" element={<CarManagement />} />
+              <Route path="booking-management" element={<BookingManagement />} />
+              <Route path="revenue" element={<Revenue />} />
+              <Route path="report-management" element={<ReportManagement />} />
+              <Route path="profiles" element={<ProfilePage />} />
             </Route>
 
             {/* 404 Page */}
@@ -107,7 +170,7 @@ function App() {
         />
       </QueryClientProvider>
     </TanstackProvider>
-  );
+  )
 }
 
-export default App;
+export default App
