@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+//searchPage.tsx
+import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Filter, Calendar, List, Map as MapIcon } from 'lucide-react';
-import { mockSearchResults, filterOptions } from '../data/mockData';
+import { Filter, Calendar, List, Map as MapIcon, Loader2 } from 'lucide-react';
+import { filterOptions } from '../data/mockData';
 import CarCard from '../components/CarCard';
 import FilterSidebar from '../components/FilterSidebar';
 import Map from '../components/Map';
+import { useCar } from '../api/carManagement';
 
 const SearchPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [showMap, setShowMap] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Get available cars from API
+  const { useAvailableCars } = useCar();
+  const { data: availableCars = [], isLoading, error } = useAvailableCars();
   
   // Get search parameters
   const location = searchParams.get('address') || '';
@@ -25,7 +31,7 @@ const SearchPage: React.FC = () => {
     features: string[];
     makes: string[];
   }>({
-    priceRange: [0, 200],
+    priceRange: [0, 500], // Increased max range for real data
     carTypes: [],
     features: [],
     makes: []
@@ -45,30 +51,106 @@ const SearchPage: React.FC = () => {
   // Clear all filters
   const clearFilters = () => {
     setActiveFilters({
-      priceRange: [0, 200],
+      priceRange: [0, 500],
       carTypes: [],
       features: [],
       makes: []
     });
   };
   
-  // Filter the search results
-  const filteredResults = mockSearchResults.filter(car => {
-    // Filter by price
-    if (car.pricePerDay < activeFilters.priceRange[0] || car.pricePerDay > activeFilters.priceRange[1]) {
-      return false;
-    }
+  // Transform API data to match CarCard expectations and apply filters
+  const filteredResults = useMemo(() => {
+    if (!availableCars.length) return [];
     
-    // Filter by make
-    if (activeFilters.makes.length > 0 && !activeFilters.makes.includes(car.make)) {
-      return false;
-    }
-    
-    // For car types and features, we would need more data in our mock objects
-    // This is a simplified version
-    
-    return true;
-  });
+    return availableCars
+      .map(car => ({
+        id: car.id,
+        make: car.make,
+        model: car.model,
+        year: car.year,
+        pricePerDay: parseFloat(car.daily_rate),
+        rating: 4.5, 
+        reviewCount: 0, 
+        image: '/placeholder-car.jpg',
+        features: [], 
+        location: car.location,
+        latitude: car.latitude,
+        longitude: car.longitude,
+        owner: car.owner,
+        color: car.color,
+        license_plate: car.license_plate,
+        description: car.description,
+        seats: car.seats,
+        transmission: car.transmission,
+        fuel_type: car.fuel_type,
+        status: car.status,
+        auto_approve_bookings: car.auto_approve_bookings
+      }))
+      .filter(car => {
+        // Filter by price
+        if (car.pricePerDay < activeFilters.priceRange[0] || car.pricePerDay > activeFilters.priceRange[1]) {
+          return false;
+        }
+        
+        // Filter by make
+        if (activeFilters.makes.length > 0 && !activeFilters.makes.includes(car.make)) {
+          return false;
+        }
+        
+        // Filter by location if provided in search
+        if (location && !car.location.toLowerCase().includes(location.toLowerCase())) {
+          return false;
+        }
+        
+        // Filter by transmission type (if included in carTypes filter)
+        if (activeFilters.carTypes.length > 0) {
+          const hasMatchingType = activeFilters.carTypes.some(type => 
+            type.toLowerCase() === car.transmission.toLowerCase() ||
+            type.toLowerCase() === car.fuel_type.toLowerCase()
+          );
+          if (!hasMatchingType) return false;
+        }
+        
+        return true;
+      });
+  }, [availableCars, activeFilters, location]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="pt-16 min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span>Loading available cars...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="pt-16 min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-red-500 text-lg mb-4">
+              Error loading cars: {error.message}
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
@@ -151,6 +233,9 @@ const SearchPage: React.FC = () => {
                 <div className="mb-4">
                   <p className="text-gray-600">
                     {filteredResults.length} cars available
+                    {availableCars.length > filteredResults.length && 
+                      ` (${availableCars.length - filteredResults.length} filtered out)`
+                    }
                   </p>
                 </div>
                 
@@ -160,7 +245,7 @@ const SearchPage: React.FC = () => {
                   ))}
                 </div>
                 
-                {filteredResults.length === 0 && (
+                {filteredResults.length === 0 && availableCars.length > 0 && (
                   <div className="text-center py-12">
                     <p className="text-gray-500 text-lg">No cars found matching your criteria.</p>
                     <button 
@@ -169,6 +254,12 @@ const SearchPage: React.FC = () => {
                     >
                       Clear all filters
                     </button>
+                  </div>
+                )}
+                
+                {availableCars.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500 text-lg">No cars are currently available.</p>
                   </div>
                 )}
               </div>
