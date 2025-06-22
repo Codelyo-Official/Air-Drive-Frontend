@@ -62,6 +62,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, setActiveTab, us
       icon: <DollarSign className="w-5 h-5" />,
     },
     {
+      id: "support",
+      name: "Add Support User",
+      route: "/admin/create-support-user",
+      icon: <Users className="w-5 h-5" />,
+    },
+    {
       id: "report",
       name: "Report Management",
       route: "/admin/report-management",

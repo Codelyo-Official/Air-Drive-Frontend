@@ -54,6 +54,7 @@ import AccessibilityPage from "./components/AccessibilityPage"
 import CookiePage from "./components/CookiePage"
 import PrivacyPage from "./components/PrivacyPage"
 import TermsPage from "./components/TermsPage"
+import CreateSupportUser from "./pages/admin/CreateSupportUser"
 
 // Create a client
 const queryClient = new QueryClient()
@@ -77,8 +78,8 @@ function App() {
               <Route path="search" element={<SearchPage />} />
               <Route path="cars/:carId" element={<CarDetailPage />} />
               <Route path="about" element={<AboutPage />} />
-              <Route path="blog" element={<BlogPage />} />
-              <Route path="contact" element={<ContactPage />} />
+              {/* <Route path="blog" element={<BlogPage />} /> */}
+              {/* <Route path="contact" element={<ContactPage />} /> */}
               <Route path="profiles" element={<ProfilePage />} />
 
               {/* Legal Pages */}
@@ -119,7 +120,7 @@ function App() {
             <Route
               path="/support"
               element={
-                <ProtectedRoute allowedRoles={["owner", "admin"]}>
+                <ProtectedRoute allowedRoles={["support"]}>
                   <SupportLayout />
                 </ProtectedRoute>
               }
@@ -148,6 +149,7 @@ function App() {
               <Route path="booking-management" element={<BookingManagement />} />
               <Route path="revenue" element={<Revenue />} />
               <Route path="report-management" element={<ReportManagement />} />
+              <Route path="create-support-user" element={<CreateSupportUser />} />
               <Route path="profiles" element={<ProfilePage />} />
             </Route>
 
