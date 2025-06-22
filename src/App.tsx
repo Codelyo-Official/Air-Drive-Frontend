@@ -49,6 +49,11 @@ import PublicRoute from "./components/PublicRoute"
 import TanstackProvider from "./providers/TanstackProvider"
 
 import { ToastContainer } from "react-toastify"
+{/* Legal Pages */ }
+import AccessibilityPage from "./components/AccessibilityPage"
+import CookiePage from "./components/CookiePage"
+import PrivacyPage from "./components/PrivacyPage"
+import TermsPage from "./components/TermsPage"
 
 // Create a client
 const queryClient = new QueryClient()
@@ -75,6 +80,12 @@ function App() {
               <Route path="blog" element={<BlogPage />} />
               <Route path="contact" element={<ContactPage />} />
               <Route path="profiles" element={<ProfilePage />} />
+
+              {/* Legal Pages */}
+              <Route path="terms" element={<TermsPage />} />
+              <Route path="privacy" element={<PrivacyPage />} />
+              <Route path="cookies" element={<CookiePage />} />
+              <Route path="accessibility" element={<AccessibilityPage />} />
 
               {/* Rent your car - only for owners and admins */}
               <Route
