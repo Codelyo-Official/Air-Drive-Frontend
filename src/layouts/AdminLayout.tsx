@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../api/auth';
-import AdminSidebar from '../pages/admin/AdminSidebar';
 import {
   ChevronDown,
-  User,
+  LogOut,
   Settings,
-  LogOut
+  User
 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../api/auth';
+import AdminSidebar from '../pages/admin/AdminSidebar';
 
 const AdminLayout = () => {
   const [activeTab, setActiveTab] = useState<string>('home');
@@ -28,7 +28,7 @@ const AdminLayout = () => {
 
   const onLogout = () => {
     logout.mutate(undefined, {
-      onSuccess: () => navigate('/login'),
+      onSuccess: () => navigate('/'),
     });
     setIsDropdownOpen(false);
   };
@@ -120,7 +120,8 @@ const AdminLayout = () => {
                   <div className="py-1">
                     <button
                       onClick={() => {
-                        console.log('View Profile clicked');
+                        navigate("/admin/profiles")
+                        // console.log('View Profile clicked');
                         setIsDropdownOpen(false);
                       }}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
@@ -142,15 +143,13 @@ const AdminLayout = () => {
 
                     <hr className="my-1 border-gray-100" />
 
-                    <Link to="/">
-                      <button
-                        onClick={onLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors duration-200"
-                      >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        Admin Logout
-                      </button>
-                    </Link>
+                    <button
+                      onClick={onLogout}
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors duration-200"
+                    >
+                      <LogOut className="w-4 h-4 mr-3" />
+                      Admin Logout
+                    </button>
                   </div>
                 </div>
               )}

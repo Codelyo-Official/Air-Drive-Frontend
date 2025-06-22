@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../api/auth';
 import Sidebar from '../pages/dashboard/Sidebar';
-import { useUsers } from '../api/user';
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState<string>('home');
@@ -10,19 +9,20 @@ const DashboardLayout = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { getUserProfile } = useUsers();
 
-  const { data: profile, isLoading, error } = getUserProfile;
+  const userDataString = localStorage.getItem('user');
+  const userData = userDataString ? JSON.parse(userDataString) : null;
+
 
   const user = {
-    name: profile?.username,
-    email: profile?.email,
+    name: userData?.username,
+    email: userData?.email,
     avatar: 'https://img.freepik.com/free-vector/smiling-young-man-glasses_1308-174702.jpg?ga=GA1.1.60525944.1740324934&semt=ais_items_boosted&w=740'
   };
 
   const onLogout = () => {
     logout.mutate(undefined, {
-      onSuccess: () => navigate('/login'),
+      onSuccess: () => navigate('/'),
     });
     setIsDropdownOpen(false);
   };
@@ -54,7 +54,8 @@ const DashboardLayout = () => {
         user={{
           name: user?.name ?? "",
           email: user?.email ?? "",
-          avatar: user?.avatar
+          user_type: userData?.user_type ?? "",
+          avatar: user?.avatar,
         }}
         onLogout={onLogout}
       />
@@ -64,7 +65,7 @@ const DashboardLayout = () => {
         <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-gray-900 hidden md:flex">Dashboard</h1>
- <h1 className="text-2xl font-semibold text-gray-900 flex md:hidden"></h1>
+            <h1 className="text-2xl font-semibold text-gray-900 flex md:hidden"></h1>
             {/* User menu */}
             <div className="relative" ref={dropdownRef}>
               <div className="flex items-center space-x-4">
@@ -132,7 +133,7 @@ const DashboardLayout = () => {
                       <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      <Link to="/dashboard/profile"> View Profile</Link>
+                      <Link to="/dashboard/profiles"> View Profile</Link>
                     </button>
 
                     <button
@@ -151,17 +152,16 @@ const DashboardLayout = () => {
 
                     <hr className="my-1 border-gray-100" />
 
-                    <Link to="/">
-                      <button
-                        onClick={onLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors duration-200"
-                      >
-                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Logout
-                      </button>
-                    </Link>
+
+                    <button
+                      onClick={onLogout}
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors duration-200"
+                    >
+                      <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Logout
+                    </button>
 
                   </div>
                 </div>

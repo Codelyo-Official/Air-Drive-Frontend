@@ -32,7 +32,6 @@ const AdminDashboard = () => {
   const pendingBookings = bookings?.filter((booking) => booking.status === "pending").length || 0
   const approvedBookings = bookings?.filter((booking) => booking.status === "approved").length || 0
 
-  const totalReports = reports?.length || 0
   const pendingReports = reports?.filter((report) => report.status === "pending").length || 0
 
   const monthlyRevenue = revenueData?.stats?.total_revenue || "0"
