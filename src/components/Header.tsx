@@ -65,12 +65,13 @@ const Header: React.FC<HeaderProps> = () => {
             <Link to="/about" className="text-sm font-medium text-white hover:text-amber-500">
               About Us
             </Link>
-            <Link to="/blog" className="text-sm font-medium text-white hover:text-amber-500">
+            {/* <Link to="/blog" className="text-sm font-medium text-white hover:text-amber-500">
               Blog
             </Link>
             <Link to="/contact" className="text-sm font-medium text-white hover:text-amber-500">
               Contact
-            </Link>
+            </Link> */}
+
 
             {/* Role-based Navigation */}
             {isAuthenticated() && (userType === "regular") && !isRentYourCar && (
@@ -177,7 +178,7 @@ const Header: React.FC<HeaderProps> = () => {
               >
                 About Us
               </Link>
-              <Link
+              {/* <Link
                 to="/blog"
                 className="text-white hover:text-amber-500 font-medium"
                 onClick={() => setIsMenuOpen(false)}
@@ -190,7 +191,7 @@ const Header: React.FC<HeaderProps> = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
-              </Link>
+              </Link> */}
 
               {/* Role-based Mobile Links */}
               {isAuthenticated() && (userType === "owner" || userType === "admin") && (

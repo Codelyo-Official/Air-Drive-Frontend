@@ -28,6 +28,22 @@ interface DeleteUserResponse {
   message: string
 }
 
+interface CreateSupportUserPayload {
+  username: string
+  email: string
+  password: string
+}
+
+interface CreateSupportUserResponse {
+  message: string
+  user: {
+    id: number
+    username: string
+    email: string
+    user_type: string
+  }
+}
+
 export const useAdmin = () => {
   const queryClient = useQueryClient()
 
@@ -125,9 +141,45 @@ export const useAdmin = () => {
     },
   })
 
+  // Create support user
+  const createSupportUser = useMutation<CreateSupportUserResponse, Error, CreateSupportUserPayload>({
+    mutationFn: async ({ username, email, password }) => {
+      const token = localStorage.getItem("authToken")
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/create-support-user/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Token ${token}`,
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(Object.values(data)?.[0]?.[0] || "Failed to create support user.")
+      }
+
+      return response.json()
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Support user created successfully.")
+      queryClient.invalidateQueries({ queryKey: ["adminUsers"] })
+    },
+    onError: (error) => {
+      console.error("Create Support User Error:", error)
+      toast.error(error.message)
+    },
+  })
+
   return {
     useAdminUsers,
     updateUser,
     deleteUser,
+    createSupportUser,
   }
 }

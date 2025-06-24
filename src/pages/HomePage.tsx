@@ -1,10 +1,127 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Car, Shield, DollarSign, CheckCircle } from 'lucide-react';
+import { Car, Shield, DollarSign, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import SearchForm from '../components/SearchForm';
-import FeaturedCars from '../components/FeaturedCars';
+import CarCard from '../components/CarCard';
+import { useCar } from '../api/carManagement';
 
 const HomePage: React.FC = () => {
+  // Get available cars from API
+  const { useAvailableCars } = useCar();
+  const { data: availableCars = [], isLoading, error } = useAvailableCars();
+
+  // Helper function to generate default coordinates for locations
+  const getLocationCoordinates = (location: string) => {
+    const locationMap: { [key: string]: { lat: number; lng: number } } = {
+      'Dollar': { lat: 40.7128, lng: -74.0060 }, // Default NYC coordinates
+      'New York': { lat: 40.7128, lng: -74.0060 },
+      'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+      'Chicago': { lat: 41.8781, lng: -87.6298 },
+      'Miami': { lat: 25.7617, lng: -80.1918 },
+      // Add more locations as needed
+    };
+    
+    return locationMap[location] || { lat: 40.7128, lng: -74.0060 };
+  };
+
+  // Transform API data for CarCard component and get featured cars (latest 6)
+  const featuredCars = useMemo(() => {
+    if (!availableCars.length) return [];
+
+    return availableCars
+      .map(car => {
+        const coords = getLocationCoordinates(car.location);
+        return {
+          id: car.id,
+          make: car.make,
+          model: car.model,
+          year: car.year,
+          pricePerDay: parseFloat(car.daily_rate),
+          rating: 4.5, // Default rating - consider adding to API
+          reviewCount: Math.floor(Math.random() * 50) + 10, // Random for demo
+          features: [], // Could be derived from transmission, fuel_type, etc.
+          location: car.location,
+          latitude: car.latitude || coords.lat,
+          longitude: car.longitude || coords.lng,
+          color: car.color,
+          license_plate: car.license_plate,
+          description: car.description || `${car.year} ${car.make} ${car.model}`,
+          seats: car.seats,
+          transmission: car.transmission,
+          fuel_type: car.fuel_type,
+          status: car.status || 'available',
+          auto_approve_bookings: car.auto_approve_bookings || false
+        };
+      })
+      .filter(car => car.status === 'available')
+      .sort((a, b) => b.year - a.year) // Sort by newest first
+      .slice(0, 6); // Take first 6 cars
+  }, [availableCars]);
+
+  // Calculate dynamic stats
+  const stats = useMemo(() => {
+    const totalCars = availableCars.length;
+    const availableCount = availableCars.filter(car => car.status === 'available').length;
+    const uniqueLocations = new Set(availableCars.map(car => car.location)).size;
+    
+    return {
+      carsAvailable: availableCount > 0 ? `${availableCount}+` : '15K+',
+      locations: uniqueLocations > 0 ? `${uniqueLocations}+` : '60+',
+      customers: '250K+', // Keep static for now
+      rating: '4.9★' // Keep static for now
+    };
+  }, [availableCars]);
+
+  // Featured Cars Component
+  const FeaturedCarsSection = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            <span className="text-gray-600">Loading latest cars...</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="text-center py-12">
+          <div className="flex items-center justify-center mb-4">
+            <AlertCircle className="h-8 w-8 text-red-500 mr-2" />
+            <span className="text-red-500 text-lg">Error loading cars</span>
+          </div>
+          <p className="text-gray-600 mb-4">Unable to load latest vehicles at the moment.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
+    if (featuredCars.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg">No cars available at the moment.</p>
+          <p className="text-gray-400">Check back later for new listings!</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {featuredCars.map(car => (
+          <CarCard key={car.id} car={car} />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -61,29 +178,29 @@ const HomePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Trust Stats */}
+            {/* Dynamic Trust Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 max-w-4xl mx-auto px-4">
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  15K+
+                  {stats.carsAvailable}
                 </div>
                 <div className="text-xs sm:text-sm text-amber-400 mt-1">Cars Available</div>
               </div>
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  60+
+                  {stats.locations}
                 </div>
-                <div className="text-xs sm:text-sm text-amber-400 mt-1">Countries</div>
+                <div className="text-xs sm:text-sm text-amber-400 mt-1">Locations</div>
               </div>
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  250K+
+                  {stats.customers}
                 </div>
                 <div className="text-xs sm:text-sm text-amber-400 mt-1">Happy Customers</div>
               </div>
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  4.9★
+                  {stats.rating}
                 </div>
                 <div className="text-xs sm:text-sm text-amber-400 mt-1">Average Rating</div>
               </div>
@@ -134,19 +251,33 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Cars Section */}
+      {/* Featured Cars Section - Now Dynamic */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">Featured Cars</h2>
-          <p className="text-gray-600 text-center mb-12">Discover our most popular vehicles</p>
-
-          <FeaturedCars />
-
-          <div className="text-center mt-12">
-            <Link to="/search" className="inline-block bg-amber-500 text-white px-8 py-3 rounded-md font-medium hover:bg-amber-600 transition-colors">
-              View all cars
-            </Link>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Latest Cars</h2>
+            <p className="text-gray-600">
+              {isLoading 
+                ? "Loading our latest vehicles..." 
+                : featuredCars.length > 0 
+                  ? `Discover ${featuredCars.length} of our newest vehicles` 
+                  : "Check back soon for new vehicles"
+              }
+            </p>
           </div>
+
+          <FeaturedCarsSection />
+
+          {featuredCars.length > 0 && (
+            <div className="text-center mt-12">
+              <Link 
+                to="/search" 
+                className="inline-block bg-amber-500 text-white px-8 py-3 rounded-md font-medium hover:bg-amber-600 transition-colors"
+              >
+                View all {availableCars.length} cars
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
