@@ -200,7 +200,7 @@ const CarList: React.FC = () => {
                 <img
                   src={
                     Array.isArray(car.images) && car.images.length > 0 && car.images[0]?.image
-                      ? car.images[0].image
+                      ? import.meta.env.VITE_API_BASE_URL + car.images[0].image
                       : "/placeholder.svg?height=200&width=300"
                   }
                   alt={car.make + " " + car.model}
