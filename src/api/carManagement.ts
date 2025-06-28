@@ -21,6 +21,12 @@ interface Car {
   fuel_type: string;
   status: string;
   auto_approve_bookings: boolean;
+  image: string;
+  availability: Array<{
+    start_date: string;
+    end_date: string;
+  }>;
+  features: string[];
 }
 
 interface CarImage {

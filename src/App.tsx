@@ -18,8 +18,8 @@ import SearchPage from "./pages/SearchPage"
 import SignupPage from "./pages/SignupPage"
 // import AboutPage from "./pages/AboutPage"
 import AboutPage from "./components/AboutPage"
-import BlogPage from "./components/BlogPage"
-import ContactPage from "./components/ContactPage"
+// import BlogPage from "./components/BlogPage"
+// import ContactPage from "./components/ContactPage"
 import ProfilePage from "./components/ProfilePage"
 
 // Dashboard Pages

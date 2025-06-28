@@ -1,18 +1,26 @@
+// CarCard.tsx 
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Users, Fuel, MapPin } from 'lucide-react';
 
 interface Car {
-  id: string;
+  id: number;
   make: string;
   model: string;
   year: number;
-  image: string;
-  rating: number;
-  seats: number;
-  fuelType: string;
-  pricePerDay: number;
+  color: string;
+  license_plate: string;
+  daily_rate: string;
   location: string;
+  seats: number;
+  transmission: string;
+  fuel_type: string;
+  image: string;
+  availability: Array<{
+    start_date: string;
+    end_date: string;
+  }>;
+  features: string[];
 }
 
 interface CarCardProps {
@@ -20,6 +28,11 @@ interface CarCardProps {
 }
 
 const CarCard: React.FC<CarCardProps> = ({ car }) => {
+  console.log("Car-------------------", car);
+  
+  // Generate a mock rating since it's not in your API data
+  const rating = 4.5; // You can calculate this based on reviews or set a default
+  
   return (
     <Link to={`/cars/${car.id}`} className="group">
       <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 group-hover:shadow-lg group-hover:-translate-y-1">
@@ -43,7 +56,7 @@ const CarCard: React.FC<CarCardProps> = ({ car }) => {
             </h3>
             <div className="flex items-center">
               <Star size={16} className="text-yellow-500 fill-yellow-500" />
-              <span className="ml-1 text-sm font-medium">{car.rating}</span>
+              <span className="ml-1 text-sm font-medium">{rating}</span>
             </div>
           </div>
           
@@ -51,7 +64,7 @@ const CarCard: React.FC<CarCardProps> = ({ car }) => {
             <Users size={16} className="mr-1" />
             <span className="mr-3">{car.seats} seats</span>
             <Fuel size={16} className="mr-1" />
-            <span>{car.fuelType}</span>
+            <span>{car.fuel_type}</span>
           </div>
           
           <div className="flex items-center text-sm text-gray-600 mb-4">
@@ -61,7 +74,7 @@ const CarCard: React.FC<CarCardProps> = ({ car }) => {
           
           <div className="flex justify-between items-center">
             <p className="text-gray-600 text-sm">
-              <span className="font-semibold text-gray-900">${car.pricePerDay}</span> / day
+              <span className="font-semibold text-gray-900">${car.daily_rate}</span> / day
             </p>
             <span className="text-sm text-amber-600 font-medium group-hover:text-amber-500">
               View details
