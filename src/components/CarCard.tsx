@@ -30,8 +30,7 @@ interface CarCardProps {
 const CarCard: React.FC<CarCardProps> = ({ car }) => {
   console.log("Car-------------------", car);
 
-  // Generate a mock rating since it's not in your API data
-  const rating = 4.5; // You can calculate this based on reviews or set a default
+  const rating = 4.5; 
 
   return (
     <Link to={`/cars/${car.id}`} className="group">
