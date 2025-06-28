@@ -34,9 +34,9 @@ const CarDetailPage: React.FC = () => {
   
   // Create images array (using single image or placeholder)
   const carImages = useMemo(() => {
-    const mainImage = car?.image_url || 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2';
+    const mainImage = car?.image|| 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2';
     return [mainImage];
-  }, [car?.image_url]);
+  }, [car?.image]);
   
   // Navigate through images (if multiple images exist)
   const nextImage = () => {
