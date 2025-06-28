@@ -107,7 +107,9 @@ const TicketConversation: React.FC<TicketConversationProps> = ({ ticket, onBack 
                 </div>
               ) : (
                 replies?.map((reply, index) => {
-                  const isUserMessage = reply.author !== 'support' && !reply.author.startsWith('support_');
+                //   const isUserMessage = reply.author !== 'support' && !reply.author.startsWith('support_');
+                const isUserMessage = true
+
                   return (
                     <div
                       key={reply.id || index}
