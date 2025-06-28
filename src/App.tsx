@@ -18,8 +18,8 @@ import SearchPage from "./pages/SearchPage"
 import SignupPage from "./pages/SignupPage"
 // import AboutPage from "./pages/AboutPage"
 import AboutPage from "./components/AboutPage"
-import BlogPage from "./components/BlogPage"
-import ContactPage from "./components/ContactPage"
+// import BlogPage from "./components/BlogPage"
+// import ContactPage from "./components/ContactPage"
 import ProfilePage from "./components/ProfilePage"
 
 // Dashboard Pages
@@ -55,6 +55,7 @@ import CookiePage from "./components/CookiePage"
 import PrivacyPage from "./components/PrivacyPage"
 import TermsPage from "./components/TermsPage"
 import CreateSupportUser from "./pages/admin/CreateSupportUser"
+import UserSupportPage from "./pages/TicketPage"
 
 // Create a client
 const queryClient = new QueryClient()
@@ -81,7 +82,7 @@ function App() {
               {/* <Route path="blog" element={<BlogPage />} /> */}
               {/* <Route path="contact" element={<ContactPage />} /> */}
               <Route path="profiles" element={<ProfilePage />} />
-
+               <Route path="tickets" element={<UserSupportPage />} />
               {/* Legal Pages */}
               <Route path="terms" element={<TermsPage />} />
               <Route path="privacy" element={<PrivacyPage />} />
