@@ -62,6 +62,11 @@ const Header: React.FC<HeaderProps> = () => {
             <Link to="/search" className="text-sm font-medium text-white hover:text-amber-500">
               Find cars
             </Link>
+            {isAuthenticated() && (
+              <Link to="/my-bookings" className="text-sm font-medium text-white hover:text-amber-500">
+                My Bookings
+              </Link>
+            )}
             <Link to="/about" className="text-sm font-medium text-white hover:text-amber-500">
               About Us
             </Link>
@@ -171,6 +176,15 @@ const Header: React.FC<HeaderProps> = () => {
               >
                 Find cars
               </Link>
+              {isAuthenticated() && (
+                <Link
+                  to="/my-bookings"
+                  className="text-white hover:text-amber-500 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Bookings
+                </Link>
+              )}
               <Link
                 to="/about"
                 className="text-white hover:text-amber-500 font-medium"

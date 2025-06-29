@@ -1,26 +1,26 @@
 // CarDetailsPages.tsx 
 import {
   ArrowLeft,
+  Bluetooth,
   Calendar,
   Car,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
-  Clock,
   CreditCard,
   Fuel,
   Heart,
   Loader2,
   MapPin,
+  Navigation,
   Settings,
   Shield,
   Users,
-  CheckCircle,
-  Navigation,
-  Bluetooth,
   Wifi
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useBookingAndReport } from '../api/bookingAndReport';
 import { useCar } from '../api/carManagement';
 
 const CarDetailPage: React.FC = () => {
@@ -29,12 +29,13 @@ const CarDetailPage: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState('');
   const [selectedEndDate, setSelectedEndDate] = useState('');
-  const [selectedStartTime, setSelectedStartTime] = useState('10:00');
-  const [selectedEndTime, setSelectedEndTime] = useState('10:00');
 
   // Get available cars from API
   const { useAvailableCars } = useCar();
   const { data: availableCars = [], isLoading, error } = useAvailableCars();
+
+  // Get booking functions
+  const { createBooking } = useBookingAndReport();
 
   console.log("availableCars-------------", availableCars)
 
@@ -65,6 +66,35 @@ const CarDetailPage: React.FC = () => {
     const serviceFee = basePrice * 0.1;
     return basePrice + serviceFee;
   }, [car, rentalDays]);
+
+  // Check if dates are valid for booking
+  const isBookingValid = useMemo(() => {
+    if (!selectedStartDate || !selectedEndDate) return false;
+    const startDate = new Date(selectedStartDate);
+    const endDate = new Date(selectedEndDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return startDate >= today && endDate > startDate;
+  }, [selectedStartDate, selectedEndDate]);
+
+  // Handle booking submission
+  const handleBooking = async () => {
+    if (!car || !isBookingValid) return;
+
+    try {
+      await createBooking.mutateAsync({
+        car: car.id,
+        start_date: selectedStartDate,
+        end_date: selectedEndDate
+      });
+      // Reset form after successful booking
+      setSelectedStartDate('');
+      setSelectedEndDate('');
+    } catch (error) {
+      console.error('Booking failed:', error);
+    }
+  };
 
   // Feature icon mapping
   const getFeatureIcon = (feature: string) => {
@@ -99,7 +129,7 @@ const CarDetailPage: React.FC = () => {
   };
 
   // Format availability dates
-  const formatAvailabilityPeriods = (availability: Array<{start_date: string, end_date: string}>) => {
+  const formatAvailabilityPeriods = (availability: Array<{ start_date: string, end_date: string }>) => {
     return availability.map((period, index) => {
       const startDate = new Date(period.start_date).toLocaleDateString('en-US', {
         month: 'short',
@@ -229,11 +259,10 @@ const CarDetailPage: React.FC = () => {
 
         {/* Status badge */}
         <div className="absolute bottom-4 right-4">
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            car.status === 'available' 
-              ? 'bg-green-100 text-green-800 border border-green-200' 
-              : 'bg-red-100 text-red-800 border border-red-200'
-          }`}>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${car.status === 'available'
+            ? 'bg-green-100 text-green-800 border border-green-200'
+            : 'bg-red-100 text-red-800 border border-red-200'
+            }`}>
             {car.status.charAt(0).toUpperCase() + car.status.slice(1)}
           </span>
         </div>
@@ -305,7 +334,7 @@ const CarDetailPage: React.FC = () => {
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-2">Color</h3>
                   <div className="flex items-center">
-                    <div 
+                    <div
                       className="w-4 h-4 rounded-full border-2 border-gray-300 mr-2"
                       style={{ backgroundColor: car.color.toLowerCase() }}
                     ></div>
@@ -389,34 +418,12 @@ const CarDetailPage: React.FC = () => {
                           type="date"
                           value={selectedStartDate}
                           onChange={(e) => setSelectedStartDate(e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
                           className="w-full border-none p-0 focus:ring-0 text-sm"
                         />
                       </div>
                     </div>
                     <div className="p-3 border-b border-gray-300">
-                      <label className="block text-xs text-gray-500 mb-1">Time</label>
-                      <div className="flex items-center">
-                        <Clock size={16} className="text-gray-400 mr-2" />
-                        <select 
-                          value={selectedStartTime}
-                          onChange={(e) => setSelectedStartTime(e.target.value)}
-                          className="w-full border-none p-0 focus:ring-0 text-sm bg-transparent"
-                        >
-                          <option value="08:00">8:00 AM</option>
-                          <option value="09:00">9:00 AM</option>
-                          <option value="10:00">10:00 AM</option>
-                          <option value="11:00">11:00 AM</option>
-                          <option value="12:00">12:00 PM</option>
-                          <option value="13:00">1:00 PM</option>
-                          <option value="14:00">2:00 PM</option>
-                          <option value="15:00">3:00 PM</option>
-                          <option value="16:00">4:00 PM</option>
-                          <option value="17:00">5:00 PM</option>
-                          <option value="18:00">6:00 PM</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="p-3 border-r border-gray-300">
                       <label className="block text-xs text-gray-500 mb-1">Until</label>
                       <div className="flex items-center">
                         <Calendar size={16} className="text-gray-400 mr-2" />
@@ -424,31 +431,9 @@ const CarDetailPage: React.FC = () => {
                           type="date"
                           value={selectedEndDate}
                           onChange={(e) => setSelectedEndDate(e.target.value)}
+                          min={selectedStartDate || new Date().toISOString().split('T')[0]}
                           className="w-full border-none p-0 focus:ring-0 text-sm"
                         />
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <label className="block text-xs text-gray-500 mb-1">Time</label>
-                      <div className="flex items-center">
-                        <Clock size={16} className="text-gray-400 mr-2" />
-                        <select 
-                          value={selectedEndTime}
-                          onChange={(e) => setSelectedEndTime(e.target.value)}
-                          className="w-full border-none p-0 focus:ring-0 text-sm bg-transparent"
-                        >
-                          <option value="08:00">8:00 AM</option>
-                          <option value="09:00">9:00 AM</option>
-                          <option value="10:00">10:00 AM</option>
-                          <option value="11:00">11:00 AM</option>
-                          <option value="12:00">12:00 PM</option>
-                          <option value="13:00">1:00 PM</option>
-                          <option value="14:00">2:00 PM</option>
-                          <option value="15:00">3:00 PM</option>
-                          <option value="16:00">4:00 PM</option>
-                          <option value="17:00">5:00 PM</option>
-                          <option value="18:00">6:00 PM</option>
-                        </select>
                       </div>
                     </div>
                   </div>
@@ -473,15 +458,27 @@ const CarDetailPage: React.FC = () => {
 
               {/* Book button */}
               <button
-                className={`w-full py-3 rounded-md font-medium mb-4 transition-colors flex items-center justify-center ${
-                  car.status === 'available'
-                    ? 'bg-amber-500 text-white hover:bg-amber-600'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-                disabled={car.status !== 'available'}
+                onClick={handleBooking}
+                disabled={!isBookingValid || car.status !== 'available' || createBooking.isPending}
+                className={`w-full py-3 rounded-md font-medium mb-4 transition-colors flex items-center justify-center ${isBookingValid && car.status === 'available' && !createBooking.isPending
+                  ? 'bg-amber-500 text-white hover:bg-amber-600'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
               >
-                <CreditCard size={20} className="mr-2" />
-                {car.status === 'available' ? 'Book now' : 'Not Available'}
+                {createBooking.isPending ? (
+                  <>
+                    <Loader2 size={20} className="mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard size={20} className="mr-2" />
+                    {car.status === 'available'
+                      ? (isBookingValid ? 'Book now' : 'Select valid dates')
+                      : 'Not Available'
+                    }
+                  </>
+                )}
               </button>
 
               <div className="text-center text-sm text-gray-500 mb-6">

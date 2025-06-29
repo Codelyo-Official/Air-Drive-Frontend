@@ -21,6 +21,7 @@ import AboutPage from "./components/AboutPage"
 // import BlogPage from "./components/BlogPage"
 // import ContactPage from "./components/ContactPage"
 import ProfilePage from "./components/ProfilePage"
+import MyBookingsPage from "./pages/MyBookingsPage"
 
 // Dashboard Pages
 import Analytics from "./pages/dashboard/Analytics"
@@ -49,12 +50,12 @@ import PublicRoute from "./components/PublicRoute"
 import TanstackProvider from "./providers/TanstackProvider"
 
 import { ToastContainer } from "react-toastify"
-{/* Legal Pages */ }
 import AccessibilityPage from "./components/AccessibilityPage"
 import CookiePage from "./components/CookiePage"
 import PrivacyPage from "./components/PrivacyPage"
 import TermsPage from "./components/TermsPage"
 import CreateSupportUser from "./pages/admin/CreateSupportUser"
+{/* Legal Pages */ }
 
 // Create a client
 const queryClient = new QueryClient()
@@ -81,6 +82,7 @@ function App() {
               {/* <Route path="blog" element={<BlogPage />} /> */}
               {/* <Route path="contact" element={<ContactPage />} /> */}
               <Route path="profiles" element={<ProfilePage />} />
+              <Route path="my-bookings" element={<MyBookingsPage />} />
 
               {/* Legal Pages */}
               <Route path="terms" element={<TermsPage />} />
