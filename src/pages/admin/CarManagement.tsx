@@ -1,6 +1,31 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
+import {
+  Search,
+  Car,
+  MapPin,
+  Users,
+  DollarSign,
+  Settings,
+  Fuel,
+  Eye,
+  Edit,
+  Trash2,
+  Check,
+  X,
+  Clock,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  Save,
+  User,
+  Mail,
+  Calendar,
+  Grid,
+  List,
+} from "lucide-react"
 import { toast } from "react-toastify"
 import { useAdminCars } from "../../api/admin/adminCarApproval"
 
@@ -21,6 +46,18 @@ interface AdminCar {
   fuel_type: string
   status: "pending" | "available" | "rejected"
   auto_approve_bookings: boolean
+  images?: {
+    id: number
+    image: string
+    is_primary: boolean
+  }[]
+  features?: {
+    name: string
+  }[]
+  availability?: {
+    start_date: string
+    end_date: string
+  }[]
   owner?: {
     id: number
     username: string
@@ -39,6 +76,13 @@ const CarManagement = () => {
     owner_id: undefined as number | undefined,
     search: "",
   })
+
+  // Pagination and sorting
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(9)
+  const [sortBy, setSortBy] = useState<"name" | "rate" | "year" | "status" | "owner">("name")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
   // UI states
   const [selectedCar, setSelectedCar] = useState<AdminCar | null>(null)
@@ -66,12 +110,49 @@ const CarManagement = () => {
   // Fetch cars with current filters
   const { data: cars, isLoading, error, refetch } = useAdminCarsList(filters)
 
+  // Filter and sort cars
+  const filteredAndSortedCars = useMemo(() => {
+    if (!cars) return []
+
+    const sorted = [...cars].sort((a, b) => {
+      let comparison = 0
+
+      switch (sortBy) {
+        case "name":
+          comparison = `${a.make} ${a.model}`.localeCompare(`${b.make} ${b.model}`)
+          break
+        case "rate":
+          comparison = Number.parseFloat(a.daily_rate) - Number.parseFloat(b.daily_rate)
+          break
+        case "year":
+          comparison = a.year - b.year
+          break
+        case "status":
+          comparison = a.status.localeCompare(b.status)
+          break
+        case "owner":
+          comparison = (a.owner?.first_name || "").localeCompare(b.owner?.first_name || "")
+          break
+      }
+
+      return sortOrder === "asc" ? comparison : -comparison
+    })
+
+    return sorted
+  }, [cars, sortBy, sortOrder])
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedCars.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedCars = filteredAndSortedCars.slice(startIndex, startIndex + itemsPerPage)
+
   // Handle filter changes
   const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value === "" ? undefined : value,
     }))
+    setCurrentPage(1)
   }
 
   // Handle search with debounce
@@ -81,6 +162,16 @@ const CarManagement = () => {
     }, 500)
     return () => clearTimeout(timeoutId)
   }, [filters.search, refetch])
+
+  // Handle sorting
+  const handleSort = (field: "name" | "rate" | "year" | "status" | "owner") => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+    } else {
+      setSortBy(field)
+      setSortOrder("asc")
+    }
+  }
 
   // Handle car status update (quick action)
   const handleStatusUpdate = (car: AdminCar, newStatus: "pending" | "available" | "rejected") => {
@@ -115,7 +206,7 @@ const CarManagement = () => {
     })
   }
 
-  // Start editing car - populate form with current values
+  // Start editing car
   const startEdit = (car: AdminCar) => {
     setEditingCar(car)
     setEditForm({
@@ -140,32 +231,13 @@ const CarManagement = () => {
   // Cancel editing
   const cancelEdit = () => {
     setEditingCar(null)
-    setEditForm({
-      status: "",
-      make: "",
-      model: "",
-      year: "",
-      color: "",
-      license_plate: "",
-      description: "",
-      daily_rate: "",
-      location: "",
-      latitude: "",
-      longitude: "",
-      seats: "",
-      transmission: "",
-      fuel_type: "",
-      auto_approve_bookings: false,
-    })
   }
 
-  // Save car changes - only send changed fields
+  // Save car changes
   const saveCar = () => {
     if (!editingCar) return
 
-    // Create updates object with only changed fields
     const updates: any = {}
-
     if (editForm.status !== editingCar.status) updates.status = editForm.status
     if (editForm.make !== editingCar.make) updates.make = editForm.make
     if (editForm.model !== editingCar.model) updates.model = editForm.model
@@ -183,7 +255,6 @@ const CarManagement = () => {
     if (editForm.auto_approve_bookings !== editingCar.auto_approve_bookings)
       updates.auto_approve_bookings = editForm.auto_approve_bookings
 
-    // Only proceed if there are changes
     if (Object.keys(updates).length === 0) {
       toast.error("No changes detected")
       return
@@ -216,292 +287,430 @@ const CarManagement = () => {
     }
   }
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "available":
+        return <Check className="h-4 w-4 text-green-500" />
+      case "pending":
+        return <Clock className="h-4 w-4 text-yellow-500" />
+      case "rejected":
+        return <X className="h-4 w-4 text-red-500" />
+      default:
+        return <AlertTriangle className="h-4 w-4 text-gray-500" />
+    }
+  }
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 pt-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+            <span className="ml-4 text-lg text-gray-700">Loading cars...</span>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="text-red-800">
-          <strong>Error:</strong> {error.message}
+      <div className="min-h-screen bg-gray-50 pt-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <AlertTriangle className="mx-auto h-12 w-12 text-red-400 mb-4" />
+            <div className="text-red-800 font-semibold mb-2">Error: {error.message}</div>
+            <button
+              onClick={() => refetch()}
+              className="mt-2 bg-amber-500 text-white px-6 py-2 rounded-md hover:bg-amber-600 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => refetch()}
-          className="mt-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-        >
-          Retry
-        </button>
       </div>
     )
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Car Management</h1>
-        <p className="text-gray-600">Review and approve car listings, manage car status and details</p>
-      </div>
-
-      {/* Filters Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search */}
-          <div>
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <input
-              type="text"
-              id="search"
-              placeholder="Make, model, license plate..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange("search", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            />
-          </div>
-
-          {/* Status */}
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              id="status"
-              value={filters.status}
-              onChange={(e) => handleFilterChange("status", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            >
-              <option value="">All Status</option>
-              <option value="pending_approval">Pending</option>
-              <option value="available">Available</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
-
-          {/* Owner ID */}
-          <div>
-            <label htmlFor="owner_id" className="block text-sm font-medium text-gray-700 mb-1">
-              Owner ID
-            </label>
-            <input
-              type="number"
-              id="owner_id"
-              placeholder="Filter by owner ID"
-              value={filters.owner_id || ""}
-              onChange={(e) =>
-                handleFilterChange("owner_id", e.target.value ? Number.parseInt(e.target.value) : undefined)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            />
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Car Management</h1>
+          <p className="text-gray-600">Review and approve car listings, manage car status and details</p>
         </div>
 
-        <div className="mt-4 flex gap-2">
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-          >
-            Clear Filters
-          </button>
-          <div className="text-sm text-gray-500 flex items-center">{cars?.length || 0} cars found</div>
-        </div>
-      </div>
+        {/* Stats Cards */}
+        {cars && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center">
+                <Car className="h-8 w-8 text-amber-500" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Total Cars</p>
+                  <p className="text-2xl font-semibold text-gray-900">{cars.length}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center">
+                <Clock className="h-8 w-8 text-yellow-500" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Pending Approval</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {cars.filter((car) => car.status === "pending").length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center">
+                <Check className="h-8 w-8 text-green-500" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Approved</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {cars.filter((car) => car.status === "available").length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center">
+                <DollarSign className="h-8 w-8 text-green-500" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">Avg. Daily Rate</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    $
+                    {cars.length > 0
+                      ? Math.round(cars.reduce((sum, car) => sum + Number.parseFloat(car.daily_rate), 0) / cars.length)
+                      : 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* Cars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cars?.map((car) => (
-          <div key={car.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            {/* Car Image Placeholder */}
-            <div className="h-48 bg-gray-100 flex items-center justify-center">
-              <svg className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
+        {/* Filters Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+            {/* Search Bar */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search by make, model, license plate..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              />
             </div>
 
-            <div className="p-4">
-              {/* Car Title */}
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {car.year} {car.make} {car.model}
-                </h3>
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(car.status)}`}
+            {/* Controls */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => refetch()}
+                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </button>
+
+              {/* View Mode Toggle */}
+              <div className="flex border border-gray-300 rounded-md">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 ${
+                    viewMode === "grid" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
+                  }`}
                 >
-                  {car.status}
-                </span>
+                  <Grid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-2 ${
+                    viewMode === "list" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
               </div>
+            </div>
+          </div>
 
-              {/* Car Details */}
-              <div className="space-y-1 text-sm text-gray-600 mb-4">
-                <p>
-                  <span className="font-medium">License:</span> {car.license_plate}
-                </p>
-                <p>
-                  <span className="font-medium">Color:</span> {car.color}
-                </p>
-                <p>
-                  <span className="font-medium">Location:</span> {car.location}
-                </p>
-                <p>
-                  <span className="font-medium">Daily Rate:</span> ${car.daily_rate}
-                </p>
-                <p>
-                  <span className="font-medium">Seats:</span> {car.seats} | <span className="font-medium">Fuel:</span>{" "}
-                  {car.fuel_type}
-                </p>
-              </div>
+          {/* Filter Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={filters.status}
+                onChange={(e) => handleFilterChange("status", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              >
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="available">Available</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
 
-              {/* Owner Info */}
-              {car.owner && (
-                <div className="mb-4 p-2 bg-gray-50 rounded-md">
-                  <p className="text-xs text-gray-500">Owner</p>
-                  <p className="text-sm text-gray-900 font-medium">
-                    {car.owner.first_name} {car.owner.last_name}
-                  </p>
-                  <p className="text-xs text-gray-500">@{car.owner.username}</p>
+            {/* Owner ID Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Owner ID</label>
+              <input
+                type="number"
+                placeholder="Filter by owner ID"
+                value={filters.owner_id || ""}
+                onChange={(e) =>
+                  handleFilterChange("owner_id", e.target.value ? Number.parseInt(e.target.value) : undefined)
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              />
+            </div>
+
+            {/* Sort Options */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split("-") as [typeof sortBy, typeof sortOrder]
+                  setSortBy(field)
+                  setSortOrder(order)
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              >
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+                <option value="rate-asc">Price Low-High</option>
+                <option value="rate-desc">Price High-Low</option>
+                <option value="year-desc">Newest First</option>
+                <option value="year-asc">Oldest First</option>
+                <option value="status-asc">Status A-Z</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Filter Actions */}
+          <div className="mt-4 flex items-center justify-between">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              Clear Filters
+            </button>
+            <div className="text-sm text-gray-600">
+              Showing {paginatedCars.length} of {filteredAndSortedCars.length} cars
+            </div>
+          </div>
+        </div>
+
+        {/* Cars Grid/List View */}
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedCars.map((car) => (
+              <div key={car.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                {/* Car Image */}
+                <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
+                  {car.images && car.images.length > 0 ? (
+                    <img
+                      src={car.images.find((img) => img.is_primary)?.image || car.images[0]?.image}
+                      alt={`${car.make} ${car.model}`}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none"
+                        e.currentTarget.nextElementSibling.style.display = "flex"
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={`w-full h-full flex items-center justify-center ${car.images && car.images.length > 0 ? "hidden" : "flex"}`}
+                  >
+                    <Car className="h-16 w-16 text-gray-400" />
+                  </div>
                 </div>
-              )}
 
-              {/* Action Buttons */}
-              <div className="space-y-2">
-                {/* Quick Status Update Buttons */}
-                {editingCar?.id !== car.id && (
-                  <>
-                    {car.status === "pending" && (
+                <div className="p-4">
+                  {/* Car Header */}
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {car.year} {car.make} {car.model}
+                      </h3>
+                      <p className="text-sm text-gray-500">{car.license_plate}</p>
+                    </div>
+                    <div className="flex items-center">
+                      {getStatusIcon(car.status)}
+                      <span className={`ml-1 px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(car.status)}`}>
+                        {car.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Car Details */}
+                  <div className="space-y-2 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center">
+                      <DollarSign className="h-4 w-4 mr-2 text-green-500" />
+                      <span className="font-medium">${car.daily_rate}/day</span>
+                    </div>
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      <span className="truncate">{car.location}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-1" />
+                        {car.seats}
+                      </div>
+                      <div className="flex items-center">
+                        <Settings className="h-4 w-4 mr-1" />
+                        {car.transmission}
+                      </div>
+                      <div className="flex items-center">
+                        <Fuel className="h-4 w-4 mr-1" />
+                        {car.fuel_type}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Owner Info */}
+                  {car.owner && (
+                    <div className="mb-4 p-3 bg-gray-50 rounded-md">
+                      <div className="flex items-center">
+                        <div className="h-8 w-8 bg-amber-100 rounded-full flex items-center justify-center">
+                          <User className="h-4 w-4 text-amber-600" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-900">
+                            {car.owner.first_name} {car.owner.last_name}
+                          </p>
+                          <p className="text-xs text-gray-500">@{car.owner.username}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  {editingCar?.id !== car.id ? (
+                    <div className="space-y-2">
+                      {/* Quick Status Actions */}
+                      {car.status === "pending" && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleStatusUpdate(car, "available")}
+                            disabled={updateCar.isPending}
+                            className="flex-1 flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors text-sm font-medium"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleStatusUpdate(car, "rejected")}
+                            disabled={updateCar.isPending}
+                            className="flex-1 flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors text-sm font-medium"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Reject
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Secondary Actions */}
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleStatusUpdate(car, "available")}
-                          disabled={updateCar.isPending}
-                          className="flex-1 bg-green-100 text-green-800 px-3 py-2 rounded-md hover:bg-green-200 disabled:opacity-50 transition-colors text-sm font-medium"
+                          onClick={() => setShowDetailsModal(car)}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-amber-100 text-amber-800 rounded-md hover:bg-amber-200 transition-colors text-sm font-medium"
                         >
-                          {updateCar.isPending ? "Updating..." : "Approve"}
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
                         </button>
                         <button
-                          onClick={() => handleStatusUpdate(car, "rejected")}
-                          disabled={updateCar.isPending}
-                          className="flex-1 bg-red-100 text-red-800 px-3 py-2 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors text-sm font-medium"
+                          onClick={() => startEdit(car)}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition-colors text-sm font-medium"
                         >
-                          {updateCar.isPending ? "Updating..." : "Reject"}
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(car)}
+                          className="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                    )}
-
-                    {car.status === "available" && (
-                      <button
-                        onClick={() => handleStatusUpdate(car, "rejected")}
-                        disabled={updateCar.isPending}
-                        className="w-full bg-red-100 text-red-800 px-3 py-2 rounded-md hover:bg-red-200 disabled:opacity-50 transition-colors text-sm font-medium"
-                      >
-                        {updateCar.isPending ? "Updating..." : "Reject"}
-                      </button>
-                    )}
-
-                    {car.status === "rejected" && (
-                      <button
-                        onClick={() => handleStatusUpdate(car, "available")}
-                        disabled={updateCar.isPending}
-                        className="w-full bg-green-100 text-green-800 px-3 py-2 rounded-md hover:bg-green-200 disabled:opacity-50 transition-colors text-sm font-medium"
-                      >
-                        {updateCar.isPending ? "Updating..." : "Approve"}
-                      </button>
-                    )}
-
-                    {/* Secondary Actions */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startEdit(car)}
-                        className="flex-1 bg-blue-100 text-blue-800 px-3 py-2 rounded-md hover:bg-blue-200 transition-colors text-sm font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setShowDetailsModal(car)}
-                        className="flex-1 bg-purple-100 text-purple-800 px-3 py-2 rounded-md hover:bg-purple-200 transition-colors text-sm font-medium"
-                      >
-                        Details
-                      </button>
-                      <button
-                        onClick={() => handleDelete(car)}
-                        className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
-                      >
-                        Delete
-                      </button>
                     </div>
-                  </>
-                )}
-
-                {/* Full Edit Form */}
-                {editingCar?.id === car.id && (
-                  <div className="space-y-3 p-3 bg-gray-50 rounded-md">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                        <select
-                          value={editForm.status}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="available">Available</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
+                  ) : (
+                    /* Edit Form */
+                    <div className="space-y-3 p-3 bg-gray-50 rounded-md max-h-96 overflow-y-auto">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                          <select
+                            value={editForm.status}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="available">Available</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Daily Rate</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={editForm.daily_rate}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, daily_rate: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          />
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Daily Rate</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editForm.daily_rate}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, daily_rate: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Make</label>
+                          <input
+                            type="text"
+                            value={editForm.make}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, make: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Model</label>
+                          <input
+                            type="text"
+                            value={editForm.model}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, model: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          />
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Make</label>
-                        <input
-                          type="text"
-                          value={editForm.make}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, make: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Model</label>
-                        <input
-                          type="text"
-                          value={editForm.model}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, model: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Year</label>
-                        <input
-                          type="number"
-                          value={editForm.year}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, year: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
-                        <input
-                          type="text"
-                          value={editForm.color}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, color: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Year</label>
+                          <input
+                            type="number"
+                            min="1900"
+                            max="2030"
+                            value={editForm.year}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, year: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
+                          <input
+                            type="text"
+                            value={editForm.color}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, color: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          />
+                        </div>
                       </div>
 
                       <div>
@@ -510,30 +719,67 @@ const CarManagement = () => {
                           type="text"
                           value={editForm.license_plate}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, license_plate: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Seats</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Location</label>
                         <input
-                          type="number"
-                          value={editForm.seats}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, seats: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          type="text"
+                          value={editForm.location}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Transmission</label>
-                        <select
-                          value={editForm.transmission}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, transmission: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="Automatic">Automatic</option>
-                          <option value="Manual">Manual</option>
-                        </select>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Latitude</label>
+                          <input
+                            type="number"
+                            step="0.000001"
+                            value={editForm.latitude}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, latitude: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Longitude</label>
+                          <input
+                            type="number"
+                            step="0.000001"
+                            value={editForm.longitude}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, longitude: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Seats</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={editForm.seats}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, seats: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Transmission</label>
+                          <select
+                            value={editForm.transmission}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, transmission: e.target.value }))}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                          >
+                            <option value="Manual">Manual</option>
+                            <option value="Automatic">Automatic</option>
+                            <option value="CVT">CVT</option>
+                          </select>
+                        </div>
                       </div>
 
                       <div>
@@ -541,7 +787,7 @@ const CarManagement = () => {
                         <select
                           value={editForm.fuel_type}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, fuel_type: e.target.value }))}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                         >
                           <option value="Petrol">Petrol</option>
                           <option value="Diesel">Diesel</option>
@@ -549,220 +795,639 @@ const CarManagement = () => {
                           <option value="Hybrid">Hybrid</option>
                         </select>
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Location</label>
-                      <input
-                        type="text"
-                        value={editForm.location}
-                        onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                      <textarea
-                        value={editForm.description}
-                        onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                        rows={2}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="flex items-center text-xs">
-                        <input
-                          type="checkbox"
-                          checked={editForm.auto_approve_bookings}
-                          onChange={(e) =>
-                            setEditForm((prev) => ({ ...prev, auto_approve_bookings: e.target.checked }))
-                          }
-                          className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                        <textarea
+                          value={editForm.description}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                          rows={2}
+                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none"
                         />
-                        Auto Approve Bookings
-                      </label>
+                      </div>
+
+                      <div>
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={editForm.auto_approve_bookings}
+                            onChange={(e) =>
+                              setEditForm((prev) => ({ ...prev, auto_approve_bookings: e.target.checked }))
+                            }
+                            className="mr-2 text-amber-500 focus:ring-amber-500"
+                          />
+                          <span className="text-xs font-medium text-gray-700">Auto-approve bookings</span>
+                        </label>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={saveCar}
+                          disabled={updateCar.isPending}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors text-sm font-medium"
+                        >
+                          <Save className="h-4 w-4 mr-1" />
+                          {updateCar.isPending ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={saveCar}
-                        disabled={updateCar.isPending}
-                        className="flex-1 bg-green-100 text-green-800 px-3 py-2 rounded-md hover:bg-green-200 disabled:opacity-50 transition-colors text-sm font-medium"
-                      >
-                        {updateCar.isPending ? "Saving..." : "Save Changes"}
-                      </button>
-                      <button
-                        onClick={cancelEdit}
-                        className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {(!cars || cars.length === 0) && (
-        <div className="text-center py-12">
-          <div className="text-gray-500">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No cars found</h3>
-            <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Car Details Modal */}
-      {showDetailsModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border border-gray-200 max-w-2xl shadow-lg rounded-lg bg-white">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">
-                {showDetailsModal.year} {showDetailsModal.make} {showDetailsModal.model}
-              </h3>
-              <button
-                onClick={() => setShowDetailsModal(null)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium text-gray-900">License Plate:</span>{" "}
-                  <span className="text-gray-600">{showDetailsModal.license_plate}</span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-900">Color:</span>{" "}
-                  <span className="text-gray-600">{showDetailsModal.color}</span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-900">Location:</span>{" "}
-                  <span className="text-gray-600">{showDetailsModal.location}</span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-900">Daily Rate:</span>{" "}
-                  <span className="text-gray-600">${showDetailsModal.daily_rate}</span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-900">Seats:</span>{" "}
-                  <span className="text-gray-600">{showDetailsModal.seats}</span>
-                </p>
-              </div>
-              <div className="space-y-2">
-                <p>
-                  <span className="font-medium text-gray-900">Transmission:</span>{" "}
-                  <span className="text-gray-600">{showDetailsModal.transmission}</span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-900">Fuel Type:</span>{" "}
-                  <span className="text-gray-600">{showDetailsModal.fuel_type}</span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-900">Status:</span>{" "}
-                  <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(showDetailsModal.status)}`}
-                  >
-                    {showDetailsModal.status}
-                  </span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-900">Auto Approve:</span>{" "}
-                  <span className="text-gray-600">{showDetailsModal.auto_approve_bookings ? "Yes" : "No"}</span>
-                </p>
-                <p>
-                  <span className="font-medium text-gray-900">Coordinates:</span>{" "}
-                  <span className="text-gray-600">
-                    {showDetailsModal.latitude}, {showDetailsModal.longitude}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            {showDetailsModal.description && (
-              <div className="mt-4">
-                <p className="font-medium text-gray-900 mb-2">Description:</p>
-                <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-md">{showDetailsModal.description}</p>
-              </div>
-            )}
-
-            {showDetailsModal.owner && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-md">
-                <p className="font-medium text-gray-900 mb-2">Owner Information:</p>
-                <div className="text-sm space-y-1">
-                  <p>
-                    <span className="font-medium">Name:</span> {showDetailsModal.owner.first_name}{" "}
-                    {showDetailsModal.owner.last_name}
-                  </p>
-                  <p>
-                    <span className="font-medium">Username:</span> @{showDetailsModal.owner.username}
-                  </p>
-                  <p>
-                    <span className="font-medium">Email:</span> {showDetailsModal.owner.email}
-                  </p>
+                  )}
                 </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          /* List View */
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort("name")}
+                    >
+                      Car {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort("owner")}
+                    >
+                      Owner {sortBy === "owner" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort("rate")}
+                    >
+                      Daily Rate {sortBy === "rate" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+                      onClick={() => handleSort("status")}
+                    >
+                      Status {sortBy === "status" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedCars.map((car) => (
+                    <tr key={car.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-16 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                            {car.images && car.images.length > 0 ? (
+                              <img
+                                src={car.images.find((img) => img.is_primary)?.image || car.images[0]?.image}
+                                alt={`${car.make} ${car.model}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none"
+                                  e.currentTarget.nextElementSibling.style.display = "flex"
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className={`w-full h-full flex items-center justify-center ${car.images && car.images.length > 0 ? "hidden" : "flex"}`}
+                            >
+                              <Car className="h-5 w-5 text-gray-400" />
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="font-medium text-gray-900">
+                              {car.year} {car.make} {car.model}
+                            </div>
+                            <div className="text-sm text-gray-500">{car.license_plate}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {car.owner ? (
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {car.owner.first_name} {car.owner.last_name}
+                            </div>
+                            <div className="text-sm text-gray-500">@{car.owner.username}</div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">No owner</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <DollarSign className="h-4 w-4 text-green-500 mr-1" />
+                          <span className="font-medium text-gray-900">${car.daily_rate}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {getStatusIcon(car.status)}
+                          <span
+                            className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(car.status)}`}
+                          >
+                            {car.status}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex space-x-2">
+                          {car.status === "pending" && (
+                            <>
+                              <button
+                                onClick={() => handleStatusUpdate(car, "available")}
+                                className="text-green-600 hover:text-green-900"
+                                title="Approve"
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleStatusUpdate(car, "rejected")}
+                                className="text-red-600 hover:text-red-900"
+                                title="Reject"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
+                          <button
+                            onClick={() => setShowDetailsModal(car)}
+                            className="text-amber-600 hover:text-amber-900"
+                            title="View details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => startEdit(car)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Edit car"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(car)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete car"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4">
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              <div className="hidden sm:flex space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum
+                  if (totalPages <= 5) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    pageNum = currentPage - 2 + i
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                        currentPage === pageNum
+                          ? "bg-amber-500 text-white"
+                          : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {(!cars || filteredAndSortedCars.length === 0) && !isLoading && (
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+            <Car className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
+              {cars && cars.length > 0 ? "No cars found" : "No cars available"}
+            </h3>
+            <p className="text-gray-500 mb-6">
+              {cars && cars.length > 0
+                ? "Try adjusting your search or filter criteria"
+                : "Cars will appear here once owners submit them for approval"}
+            </p>
+            {cars && cars.length > 0 && (
+              <button
+                onClick={clearFilters}
+                className="bg-amber-500 text-white px-6 py-3 rounded-md hover:bg-amber-600 transition-colors"
+              >
+                Clear All Filters
+              </button>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3 text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+        {/* Edit Car Modal */}
+        {editingCar && viewMode === "list" && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-10 mx-auto p-5 border border-gray-200 max-w-2xl shadow-lg rounded-lg bg-white">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Edit {editingCar.year} {editingCar.make} {editingCar.model}
+                </h3>
+                <button onClick={cancelEdit} className="text-gray-500 hover:text-gray-700 transition-colors">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="available">Available</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Daily Rate</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editForm.daily_rate}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, daily_rate: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Make</label>
+                    <input
+                      type="text"
+                      value={editForm.make}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, make: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                    <input
+                      type="text"
+                      value={editForm.model}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, model: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                    <input
+                      type="number"
+                      min="1900"
+                      max="2030"
+                      value={editForm.year}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, year: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                    <input
+                      type="text"
+                      value={editForm.color}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, color: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">License Plate</label>
+                    <input
+                      type="text"
+                      value={editForm.license_plate}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, license_plate: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Seats</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={editForm.seats}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, seats: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Transmission</label>
+                    <select
+                      value={editForm.transmission}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, transmission: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    >
+                      <option value="Manual">Manual</option>
+                      <option value="Automatic">Automatic</option>
+                      <option value="CVT">CVT</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
+                    <select
+                      value={editForm.fuel_type}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, fuel_type: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    >
+                      <option value="Petrol">Petrol</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Electric">Electric</option>
+                      <option value="Hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={editForm.latitude}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, latitude: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                    <input
+                      type="number"
+                      step="0.000001"
+                      value={editForm.longitude}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, longitude: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={editForm.location}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                   />
-                </svg>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none"
+                  />
+                </div>
+
+                <div className="mt-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={editForm.auto_approve_bookings}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, auto_approve_bookings: e.target.checked }))}
+                      className="mr-2 text-amber-500 focus:ring-amber-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Auto-approve bookings</span>
+                  </label>
+                </div>
               </div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Delete Car</h3>
-              <div className="mt-2 px-7 py-3">
-                <p className="text-sm text-gray-500">
-                  Are you sure you want to delete{" "}
-                  <strong className="text-gray-900">
-                    {showDeleteModal.year} {showDeleteModal.make} {showDeleteModal.model}
-                  </strong>
-                  ? This action cannot be undone.
-                </p>
-              </div>
-              <div className="items-center px-4 py-3">
+
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
                 <button
-                  onClick={confirmDelete}
-                  disabled={deleteCar.isPending}
-                  className="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:opacity-50 transition-colors"
+                  onClick={saveCar}
+                  disabled={updateCar.isPending}
+                  className="flex-1 flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
                 >
-                  {deleteCar.isPending ? "Deleting..." : "Delete"}
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateCar.isPending ? "Saving..." : "Save Changes"}
                 </button>
                 <button
-                  onClick={() => setShowDeleteModal(null)}
-                  className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors"
+                  onClick={cancelEdit}
+                  className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-medium"
                 >
+                  <X className="h-4 w-4 mr-2" />
                   Cancel
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Car Details Modal */}
+        {showDetailsModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-10 mx-auto p-5 border border-gray-200 max-w-2xl shadow-lg rounded-lg bg-white">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {showDetailsModal.year} {showDetailsModal.make} {showDetailsModal.model}
+                </h3>
+                <button
+                  onClick={() => setShowDetailsModal(null)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Car Images Gallery */}
+              {showDetailsModal.images && showDetailsModal.images.length > 0 && (
+                <div className="mb-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {showDetailsModal.images.map((image, index) => (
+                      <div key={image.id} className="relative">
+                        <img
+                          src={image.image || "/placeholder.svg"}
+                          alt={`${showDetailsModal.make} ${showDetailsModal.model} - Image ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-md"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none"
+                          }}
+                        />
+                        {image.is_primary && (
+                          <div className="absolute top-1 right-1 bg-amber-500 text-white text-xs px-1 py-0.5 rounded">
+                            Primary
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <Car className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="font-medium">License:</span>
+                    <span className="ml-2">{showDetailsModal.license_plate}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="font-medium">Year:</span>
+                    <span className="ml-2">{showDetailsModal.year}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="font-medium">Location:</span>
+                    <span className="ml-2">{showDetailsModal.location}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <DollarSign className="h-4 w-4 text-green-500 mr-2" />
+                    <span className="font-medium">Daily Rate:</span>
+                    <span className="ml-2">${showDetailsModal.daily_rate}</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="font-medium">Seats:</span>
+                    <span className="ml-2">{showDetailsModal.seats}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Settings className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="font-medium">Transmission:</span>
+                    <span className="ml-2">{showDetailsModal.transmission}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Fuel className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="font-medium">Fuel Type:</span>
+                    <span className="ml-2">{showDetailsModal.fuel_type}</span>
+                  </div>
+                  <div className="flex items-center">
+                    {getStatusIcon(showDetailsModal.status)}
+                    <span className="font-medium ml-2">Status:</span>
+                    <span
+                      className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(showDetailsModal.status)}`}
+                    >
+                      {showDetailsModal.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {showDetailsModal.description && (
+                <div className="mb-6">
+                  <p className="font-medium text-gray-900 mb-2">Description:</p>
+                  <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-md">{showDetailsModal.description}</p>
+                </div>
+              )}
+
+              {showDetailsModal.owner && (
+                <div className="p-4 bg-gray-50 rounded-md">
+                  <p className="font-medium text-gray-900 mb-3">Owner Information:</p>
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div className="ml-4">
+                      <div className="font-medium text-gray-900">
+                        {showDetailsModal.owner.first_name} {showDetailsModal.owner.last_name}
+                      </div>
+                      <div className="text-sm text-gray-500">@{showDetailsModal.owner.username}</div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Mail className="h-3 w-3 mr-1" />
+                        {showDetailsModal.owner.email}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+              <div className="mt-3 text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Delete Car</h3>
+                <div className="mt-2 px-7 py-3">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete{" "}
+                    <strong className="text-gray-900">
+                      {showDeleteModal.year} {showDeleteModal.make} {showDeleteModal.model}
+                    </strong>
+                    ? This action cannot be undone.
+                  </p>
+                </div>
+                <div className="items-center px-4 py-3">
+                  <button
+                    onClick={confirmDelete}
+                    disabled={deleteCar.isPending}
+                    className="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:opacity-50 transition-colors"
+                  >
+                    {deleteCar.isPending ? "Deleting..." : "Delete"}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteModal(null)}
+                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
