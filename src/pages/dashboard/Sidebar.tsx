@@ -74,6 +74,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogo
       ),
     },
     {
+      id: "owner-bookings",
+      name: "Owner Bookings",
+      route: "/dashboard/owner-bookings",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2" stroke="currentColor" fill="none" />
+          <path d="M16 2v4M8 2v4M3 10h18" strokeWidth="2" stroke="currentColor" fill="none" />
+        </svg>
+      ),
+    },
+    {
       id: "create",
       name: "Add Car",
       route: "/dashboard/create-car",
@@ -208,7 +219,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, user, onLogo
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
-              Logout
+            Logout
           </button>
         </div>
       </div>

@@ -29,6 +29,7 @@ import CarList from "./pages/dashboard/CarList"
 import Chat from "./pages/dashboard/Chat"
 import CreateCar from "./pages/dashboard/CreateCar"
 import DashboardHome from "./pages/dashboard/Dashboard"
+import OwnerBookingPage from "./pages/dashboard/OwnerBookingPage"
 // import Profile from "./pages/dashboard/Profile"
 
 // Support Pages
@@ -113,6 +114,7 @@ function App() {
               <Route index element={<DashboardHome />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="car-list" element={<CarList />} />
+              <Route path="owner-bookings" element={<OwnerBookingPage />} />
               <Route path="profiles" element={<ProfilePage />} />
               <Route path="create-car" element={<CreateCar />} />
               <Route path="chat" element={<Chat />} />
