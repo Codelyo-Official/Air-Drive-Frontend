@@ -16,7 +16,8 @@ import {
   Settings,
   Shield,
   Users,
-  Wifi
+  Wifi,
+  X
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -29,15 +30,14 @@ const CarDetailPage: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState('');
   const [selectedEndDate, setSelectedEndDate] = useState('');
+  const { createBooking, createReport } = useBookingAndReport();
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
 
   // Get available cars from API
   const { useAvailableCars } = useCar();
-  const { data: availableCars = [], isLoading, error } = useAvailableCars();
-
-  // Get booking functions
-  const { createBooking } = useBookingAndReport();
-
-  console.log("availableCars-------------", availableCars)
+  const { data: availableCars = [], isLoading } = useAvailableCars();
 
   // Find the specific car by ID (convert string to number)
   const car = useMemo(() => {
@@ -145,6 +145,25 @@ const CarDetailPage: React.FC = () => {
     });
   };
 
+  // Handle report submit
+  const handleReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!car || !reportReason) return;
+    try {
+      await createReport.mutateAsync({
+        report_type: 'car',
+        reason: reportReason,
+        reported_car_id: car.id,
+        ...(reportDescription ? { description: reportDescription } : {})
+      });
+      setIsReportModalOpen(false);
+      setReportReason('');
+      setReportDescription('');
+    } catch (error) {
+      // Error handled by toast
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -155,27 +174,6 @@ const CarDetailPage: React.FC = () => {
               <Loader2 className="h-6 w-6 animate-spin" />
               <span>Loading car details...</span>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="pt-16 min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <p className="text-red-500 text-lg mb-4">
-              Error loading car details: {error.message}
-            </p>
-            <Link
-              to="/search"
-              className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600"
-            >
-              Back to Search
-            </Link>
           </div>
         </div>
       </div>
@@ -295,6 +293,15 @@ const CarDetailPage: React.FC = () => {
                   </div>
                   <div className="text-sm text-gray-500">per day</div>
                 </div>
+              </div>
+              {/* Report this car button */}
+              <div className="flex justify-end mb-2">
+                <button
+                  className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm font-medium"
+                  onClick={() => setIsReportModalOpen(true)}
+                >
+                  Report this car
+                </button>
               </div>
 
               {/* Car specifications grid */}
@@ -499,6 +506,58 @@ const CarDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {isReportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+              onClick={() => setIsReportModalOpen(false)}
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">Report this car</h2>
+            <form onSubmit={handleReportSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  value={reportReason}
+                  onChange={e => setReportReason(e.target.value)}
+                  required
+                  placeholder="Enter reason (e.g. inappropriate, damaged, etc.)"
+                  disabled={createReport.isPending}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  value={reportDescription}
+                  onChange={e => setReportDescription(e.target.value)}
+                  rows={3}
+                  placeholder="Add more details if needed"
+                  disabled={createReport.isPending}
+                />
+              </div>
+              <button
+                type="submit"
+                className={`w-full py-2 rounded-md font-medium transition-colors flex items-center justify-center ${createReport.isPending ? 'bg-gray-300 text-gray-500' : 'bg-red-500 text-white hover:bg-red-600'}`}
+                disabled={createReport.isPending || !reportReason}
+              >
+                {createReport.isPending ? (
+                  <><Loader2 size={18} className="mr-2 animate-spin" />Submitting...</>
+                ) : (
+                  'Submit Report'
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
