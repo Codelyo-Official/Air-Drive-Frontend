@@ -62,6 +62,15 @@ const Header: React.FC<HeaderProps> = () => {
             <Link to="/search" className="text-sm font-medium text-white hover:text-amber-500">
               Find cars
             </Link>
+
+             {isAuthenticated() && (userType === "regular") && (
+              <Link
+                to="/my-bookings"
+                className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-amber-600 transition-colors"
+              >
+               My Bookings
+              </Link>
+            )}
             <Link to="/about" className="text-sm font-medium text-white hover:text-amber-500">
               About Us
             </Link>
@@ -91,7 +100,7 @@ const Header: React.FC<HeaderProps> = () => {
               </Link>
             )}
 
-            {isAuthenticated() && (userType === "owner" || userType === "admin") && (
+            {isAuthenticated() && (userType === "support") && (
               <Link to="/support">
                 <button className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-amber-600 transition-colors">
                   Support
@@ -171,6 +180,15 @@ const Header: React.FC<HeaderProps> = () => {
               >
                 Find cars
               </Link>
+              {isAuthenticated() && (
+                <Link
+                  to="/my-bookings"
+                  className="text-white hover:text-amber-500 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Bookings
+                </Link>
+              )}
               <Link
                 to="/about"
                 className="text-white hover:text-amber-500 font-medium"

@@ -18,16 +18,18 @@ import SearchPage from "./pages/SearchPage"
 import SignupPage from "./pages/SignupPage"
 // import AboutPage from "./pages/AboutPage"
 import AboutPage from "./components/AboutPage"
-import BlogPage from "./components/BlogPage"
-import ContactPage from "./components/ContactPage"
+// import BlogPage from "./components/BlogPage"
+// import ContactPage from "./components/ContactPage"
 import ProfilePage from "./components/ProfilePage"
+import MyBookingsPage from "./pages/MyBookingsPage"
 
 // Dashboard Pages
-import Analytics from "./pages/dashboard/Analytics"
+// import Analytics from "./pages/dashboard/Analytics"
 import CarList from "./pages/dashboard/CarList"
 import Chat from "./pages/dashboard/Chat"
 import CreateCar from "./pages/dashboard/CreateCar"
 import DashboardHome from "./pages/dashboard/Dashboard"
+import OwnerBookingPage from "./pages/dashboard/OwnerBookingPage"
 // import Profile from "./pages/dashboard/Profile"
 
 // Support Pages
@@ -49,12 +51,13 @@ import PublicRoute from "./components/PublicRoute"
 import TanstackProvider from "./providers/TanstackProvider"
 
 import { ToastContainer } from "react-toastify"
-{/* Legal Pages */ }
 import AccessibilityPage from "./components/AccessibilityPage"
 import CookiePage from "./components/CookiePage"
 import PrivacyPage from "./components/PrivacyPage"
 import TermsPage from "./components/TermsPage"
 import CreateSupportUser from "./pages/admin/CreateSupportUser"
+import UserSupportPage from "./pages/TicketPage"
+{/* Legal Pages */ }
 
 // Create a client
 const queryClient = new QueryClient()
@@ -81,7 +84,9 @@ function App() {
               {/* <Route path="blog" element={<BlogPage />} /> */}
               {/* <Route path="contact" element={<ContactPage />} /> */}
               <Route path="profiles" element={<ProfilePage />} />
+              <Route path="my-bookings" element={<MyBookingsPage />} />
 
+              <Route path="tickets" element={<UserSupportPage />} />
               {/* Legal Pages */}
               <Route path="terms" element={<TermsPage />} />
               <Route path="privacy" element={<PrivacyPage />} />
@@ -108,9 +113,11 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<DashboardHome />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="car-list" element={<CarList />} />
+              {/* <Route index element={<DashboardHome />} /> */}
+              {/* <Route path="analytics" element={<Analytics />} /> */}
+              {/* <Route path="car-list" element={<CarList />} /> */}
+              <Route index element={<CarList />} />
+              <Route path="owner-bookings" element={<OwnerBookingPage />} />
               <Route path="profiles" element={<ProfilePage />} />
               <Route path="create-car" element={<CreateCar />} />
               <Route path="chat" element={<Chat />} />

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Car, Shield, DollarSign, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import SearchForm from '../components/SearchForm';
@@ -9,68 +9,6 @@ const HomePage: React.FC = () => {
   // Get available cars from API
   const { useAvailableCars } = useCar();
   const { data: availableCars = [], isLoading, error } = useAvailableCars();
-
-  // Helper function to generate default coordinates for locations
-  const getLocationCoordinates = (location: string) => {
-    const locationMap: { [key: string]: { lat: number; lng: number } } = {
-      'Dollar': { lat: 40.7128, lng: -74.0060 }, // Default NYC coordinates
-      'New York': { lat: 40.7128, lng: -74.0060 },
-      'Los Angeles': { lat: 34.0522, lng: -118.2437 },
-      'Chicago': { lat: 41.8781, lng: -87.6298 },
-      'Miami': { lat: 25.7617, lng: -80.1918 },
-      // Add more locations as needed
-    };
-    
-    return locationMap[location] || { lat: 40.7128, lng: -74.0060 };
-  };
-
-  // Transform API data for CarCard component and get featured cars (latest 6)
-  const featuredCars = useMemo(() => {
-    if (!availableCars.length) return [];
-
-    return availableCars
-      .map(car => {
-        const coords = getLocationCoordinates(car.location);
-        return {
-          id: car.id,
-          make: car.make,
-          model: car.model,
-          year: car.year,
-          pricePerDay: parseFloat(car.daily_rate),
-          rating: 4.5, // Default rating - consider adding to API
-          reviewCount: Math.floor(Math.random() * 50) + 10, // Random for demo
-          features: [], // Could be derived from transmission, fuel_type, etc.
-          location: car.location,
-          latitude: car.latitude || coords.lat,
-          longitude: car.longitude || coords.lng,
-          color: car.color,
-          license_plate: car.license_plate,
-          description: car.description || `${car.year} ${car.make} ${car.model}`,
-          seats: car.seats,
-          transmission: car.transmission,
-          fuel_type: car.fuel_type,
-          status: car.status || 'available',
-          auto_approve_bookings: car.auto_approve_bookings || false
-        };
-      })
-      .filter(car => car.status === 'available')
-      .sort((a, b) => b.year - a.year) // Sort by newest first
-      .slice(0, 6); // Take first 6 cars
-  }, [availableCars]);
-
-  // Calculate dynamic stats
-  const stats = useMemo(() => {
-    const totalCars = availableCars.length;
-    const availableCount = availableCars.filter(car => car.status === 'available').length;
-    const uniqueLocations = new Set(availableCars.map(car => car.location)).size;
-    
-    return {
-      carsAvailable: availableCount > 0 ? `${availableCount}+` : '15K+',
-      locations: uniqueLocations > 0 ? `${uniqueLocations}+` : '60+',
-      customers: '250K+', // Keep static for now
-      rating: '4.9★' // Keep static for now
-    };
-  }, [availableCars]);
 
   // Featured Cars Component
   const FeaturedCarsSection = () => {
@@ -103,7 +41,7 @@ const HomePage: React.FC = () => {
       );
     }
 
-    if (featuredCars.length === 0) {
+    if (availableCars.length === 0) {
       return (
         <div className="text-center py-12">
           <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -115,7 +53,7 @@ const HomePage: React.FC = () => {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {featuredCars.map(car => (
+        {availableCars.map(car => (
           <CarCard key={car.id} car={car} />
         ))}
       </div>
@@ -172,39 +110,39 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Search Form Card */}
-            <div className="max-w-5xl mx-auto mb-8 lg:mb-12">
+            <div className="max-w-2xl mx-auto mb-8 lg:mb-12">
               <div className="bg-white/95 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 border border-white/20 hover:bg-white/100 hover:shadow-3xl transition-all duration-300 mx-4 sm:mx-0">
                 <SearchForm />
               </div>
             </div>
 
-            {/* Dynamic Trust Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 max-w-4xl mx-auto px-4">
+            {/*Trust Stats */}
+            {/* <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 max-w-4xl mx-auto px-4">
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  {stats.carsAvailable}
+                   15K+
                 </div>
                 <div className="text-xs sm:text-sm text-amber-400 mt-1">Cars Available</div>
               </div>
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  {stats.locations}
+                  1+
                 </div>
                 <div className="text-xs sm:text-sm text-amber-400 mt-1">Locations</div>
               </div>
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  {stats.customers}
+                  250k+
                 </div>
                 <div className="text-xs sm:text-sm text-amber-400 mt-1">Happy Customers</div>
               </div>
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  {stats.rating}
+                  4.9★
                 </div>
                 <div className="text-xs sm:text-sm text-amber-400 mt-1">Average Rating</div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
@@ -259,8 +197,8 @@ const HomePage: React.FC = () => {
             <p className="text-gray-600">
               {isLoading 
                 ? "Loading our latest vehicles..." 
-                : featuredCars.length > 0 
-                  ? `Discover ${featuredCars.length} of our newest vehicles` 
+                : availableCars.length > 0 
+                  ? `Discover ${availableCars.length} of our newest vehicles` 
                   : "Check back soon for new vehicles"
               }
             </p>
@@ -268,7 +206,7 @@ const HomePage: React.FC = () => {
 
           <FeaturedCarsSection />
 
-          {featuredCars.length > 0 && (
+          {availableCars.length > 0 && (
             <div className="text-center mt-12">
               <Link 
                 to="/search" 

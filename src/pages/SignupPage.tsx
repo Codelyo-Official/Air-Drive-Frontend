@@ -1,6 +1,6 @@
 //signupPage.tsx
 import { ErrorMessage, Field, Form, Formik, FormikHelpers } from 'formik';
-import { AlertCircle, ArrowRight, CheckCircle, Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../api/auth';
@@ -337,47 +337,6 @@ const SignupPage: React.FC = () => {
             </Form>
           )}
         </Formik>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or sign up with</span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Google
-            </button>
-            <button
-              type="button"
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Facebook
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 space-y-4">
-          <div className="flex items-start">
-            <CheckCircle size={20} className="text-amber-500 mr-2 flex-shrink-0" />
-            <p className="text-sm text-gray-600">
-              <span className="font-medium text-gray-900">Insurance included.</span> Every trip includes liability insurance and protection against physical damage.
-            </p>
-          </div>
-          <div className="flex items-start">
-            <CheckCircle size={20} className="text-amber-500 mr-2 flex-shrink-0" />
-            <p className="text-sm text-gray-600">
-              <span className="font-medium text-gray-900">Vetted renters.</span> We verify driver's licenses and driving records to ensure safety.
-            </p>
-          </div>
-        </div>
 
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600">

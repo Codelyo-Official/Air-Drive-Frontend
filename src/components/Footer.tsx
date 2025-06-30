@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <footer className="bg-black text-white">
       <div className="border-b border-gray-700">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto text-center">

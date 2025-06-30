@@ -1,6 +1,8 @@
+"use client"
+
 import type React from "react"
 import { useState } from "react"
-import { useCar, createCarPayload } from "../../api/carManagement"
+import { useCar, createCarPayload, handleFileSelection, validateImageFiles } from "../../api/carManagement"
 
 interface FormData {
   make: string
@@ -50,8 +52,9 @@ const CreateCar: React.FC = () => {
   const [newFeature, setNewFeature] = useState<string>("")
   const [newAvailability, setNewAvailability] = useState({
     start_date: "",
-    end_date: ""
+    end_date: "",
   })
+  const [imageErrors, setImageErrors] = useState<string[]>([])
 
   const transmissions: string[] = ["Manual", "Automatic", "CVT"]
   const fuelTypes: string[] = ["Petrol", "Diesel", "Hybrid", "Electric"]
@@ -59,7 +62,7 @@ const CreateCar: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
-    
+
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked
       setFormData((prev) => ({
@@ -75,11 +78,25 @@ const CreateCar: React.FC = () => {
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...files],
-    }))
+    const files = handleFileSelection(e)
+
+    if (files.length > 0) {
+      // Validate images
+      const validation = validateImageFiles(files)
+
+      if (!validation.valid) {
+        setImageErrors(validation.errors)
+        return
+      }
+
+      // Clear any previous errors
+      setImageErrors([])
+
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...files],
+      }))
+    }
   }
 
   const handleRemoveImage = (index: number) => {
@@ -87,6 +104,8 @@ const CreateCar: React.FC = () => {
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
     }))
+    // Clear errors when images are removed
+    setImageErrors([])
   }
 
   const handleAddFeature = (): void => {
@@ -108,6 +127,12 @@ const CreateCar: React.FC = () => {
 
   const handleAddAvailability = (): void => {
     if (newAvailability.start_date && newAvailability.end_date) {
+      // Validate that end date is after start date
+      if (new Date(newAvailability.end_date) <= new Date(newAvailability.start_date)) {
+        alert("End date must be after start date")
+        return
+      }
+
       setFormData((prev) => ({
         ...prev,
         availability: [...prev.availability, { ...newAvailability }],
@@ -123,55 +148,92 @@ const CreateCar: React.FC = () => {
     }))
   }
 
-  const convertImageToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
+  const validateForm = (): boolean => {
+    // Basic validation
+    const requiredFields = [
+      "make",
+      "model",
+      "year",
+      "color",
+      "license_plate",
+      "description",
+      "daily_rate",
+      "location",
+      "latitude",
+      "longitude",
+      "seats",
+      "transmission",
+      "fuel_type",
+    ]
+
+    for (const field of requiredFields) {
+      if (!formData[field as keyof FormData]) {
+        alert(`Please fill in the ${field.replace("_", " ")} field`)
+        return false
+      }
+    }
+
+    // Validate numeric fields
+    if (Number.parseInt(formData.year) < 1990 || Number.parseInt(formData.year) > 2025) {
+      alert("Please enter a valid year between 1990 and 2025")
+      return false
+    }
+
+    if (Number.parseFloat(formData.daily_rate) <= 0) {
+      alert("Daily rate must be greater than 0")
+      return false
+    }
+
+    if (Number.parseInt(formData.seats) < 2 || Number.parseInt(formData.seats) > 8) {
+      alert("Number of seats must be between 2 and 8")
+      return false
+    }
+
+    // Validate images
+    if (formData.images.length === 0) {
+      alert("Please upload at least one image")
+      return false
+    }
+
+    return true
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
-    
+
+    if (!validateForm()) {
+      return
+    }
+
     try {
-      // Convert images to base64
-      const imagePromises = formData.images.map(async (file, index) => ({
-        image: await convertImageToBase64(file),
-        is_primary: index === 0, // First image is primary
-      }))
-      
-      const images = await Promise.all(imagePromises)
-      
-      // Get owner ID from localStorage or context (adjust as needed)
+      // Get owner ID from localStorage or context
       const ownerData = localStorage.getItem("userData")
       const owner = ownerData ? JSON.parse(ownerData).id : 1
-      
+
       const payload = createCarPayload({
         owner,
         make: formData.make,
         model: formData.model,
-        year: parseInt(formData.year),
+        year: Number.parseInt(formData.year),
         color: formData.color,
         license_plate: formData.license_plate,
         description: formData.description,
-        daily_rate: parseFloat(formData.daily_rate),
+        daily_rate: Number.parseFloat(formData.daily_rate),
         location: formData.location,
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude),
-        seats: parseInt(formData.seats),
+        latitude: Number.parseFloat(formData.latitude),
+        longitude: Number.parseFloat(formData.longitude),
+        seats: Number.parseInt(formData.seats),
         transmission: formData.transmission,
         fuel_type: formData.fuel_type,
         status: "pending_approval",
         auto_approve_bookings: formData.auto_approve_bookings,
-        images,
-        features: formData.features.map(name => ({ name })),
+        images: formData.images, // Pass File objects directly
+        features: formData.features.map((name) => ({ name })),
         availability: formData.availability,
       })
 
       await createCar.mutateAsync(payload)
-      
+
       // Reset form after successful submission
       setFormData({
         make: "",
@@ -192,6 +254,7 @@ const CreateCar: React.FC = () => {
         images: [],
         availability: [],
       })
+      setImageErrors([])
     } catch (error) {
       console.error("Error creating car:", error)
     }
@@ -211,7 +274,7 @@ const CreateCar: React.FC = () => {
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Make</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Make *</label>
               <input
                 type="text"
                 name="make"
@@ -223,7 +286,7 @@ const CreateCar: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Model *</label>
               <input
                 type="text"
                 name="model"
@@ -235,7 +298,7 @@ const CreateCar: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Year *</label>
               <input
                 type="number"
                 name="year"
@@ -249,7 +312,7 @@ const CreateCar: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">License Plate</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">License Plate *</label>
               <input
                 type="text"
                 name="license_plate"
@@ -268,7 +331,7 @@ const CreateCar: React.FC = () => {
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Pricing & Location</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate ($)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate ($) *</label>
               <input
                 type="number"
                 name="daily_rate"
@@ -282,7 +345,7 @@ const CreateCar: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
               <input
                 type="text"
                 name="location"
@@ -294,7 +357,7 @@ const CreateCar: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Latitude *</label>
               <input
                 type="number"
                 name="latitude"
@@ -307,7 +370,7 @@ const CreateCar: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Longitude *</label>
               <input
                 type="number"
                 name="longitude"
@@ -327,7 +390,7 @@ const CreateCar: React.FC = () => {
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Technical Specifications</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Transmission</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Transmission *</label>
               <select
                 name="transmission"
                 value={formData.transmission}
@@ -344,7 +407,7 @@ const CreateCar: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Fuel Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Fuel Type *</label>
               <select
                 name="fuel_type"
                 value={formData.fuel_type}
@@ -361,7 +424,7 @@ const CreateCar: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Seats</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Seats *</label>
               <input
                 type="number"
                 name="seats"
@@ -375,7 +438,7 @@ const CreateCar: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Color *</label>
               <select
                 name="color"
                 value={formData.color}
@@ -397,7 +460,7 @@ const CreateCar: React.FC = () => {
                 name="auto_approve_bookings"
                 checked={formData.auto_approve_bookings}
                 onChange={handleInputChange}
-                className="mr-2"
+                className="mr-2 h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
               />
               <label className="text-sm font-medium text-gray-700">Auto Approve Bookings</label>
             </div>
@@ -457,8 +520,9 @@ const CreateCar: React.FC = () => {
                 <input
                   type="date"
                   value={newAvailability.start_date}
-                  onChange={(e) => setNewAvailability(prev => ({ ...prev, start_date: e.target.value }))}
+                  onChange={(e) => setNewAvailability((prev) => ({ ...prev, start_date: e.target.value }))}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm sm:text-base"
+                  min={new Date().toISOString().split("T")[0]}
                 />
               </div>
               <div>
@@ -466,15 +530,17 @@ const CreateCar: React.FC = () => {
                 <input
                   type="date"
                   value={newAvailability.end_date}
-                  onChange={(e) => setNewAvailability(prev => ({ ...prev, end_date: e.target.value }))}
+                  onChange={(e) => setNewAvailability((prev) => ({ ...prev, end_date: e.target.value }))}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm sm:text-base"
+                  min={newAvailability.start_date || new Date().toISOString().split("T")[0]}
                 />
               </div>
             </div>
             <button
               type="button"
               onClick={handleAddAvailability}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm sm:text-base"
+              disabled={!newAvailability.start_date || !newAvailability.end_date}
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add Availability
             </button>
@@ -483,12 +549,13 @@ const CreateCar: React.FC = () => {
                 {formData.availability.map((period, index) => (
                   <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                     <span className="text-sm">
-                      {period.start_date} to {period.end_date}
+                      {new Date(period.start_date).toLocaleDateString()} to{" "}
+                      {new Date(period.end_date).toLocaleDateString()}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleRemoveAvailability(index)}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-red-600 hover:text-red-800 text-sm"
                     >
                       Remove
                     </button>
@@ -501,7 +568,7 @@ const CreateCar: React.FC = () => {
 
         {/* Description */}
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-card">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Description</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Description *</h2>
           <textarea
             name="description"
             value={formData.description}
@@ -509,12 +576,13 @@ const CreateCar: React.FC = () => {
             rows={4}
             className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm sm:text-base"
             placeholder="Describe the car, its condition, and any special notes..."
+            required
           />
         </div>
 
         {/* Images */}
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-card">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Images</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Images *</h2>
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center">
               <svg
@@ -531,35 +599,48 @@ const CreateCar: React.FC = () => {
                 />
               </svg>
               <p className="text-gray-600 mb-2 text-sm sm:text-base">Click to upload or drag and drop</p>
-              <p className="text-xs sm:text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
-              <input 
-                type="file" 
+              <p className="text-xs sm:text-sm text-gray-500">PNG, JPG, WebP up to 5MB each</p>
+              <input
+                type="file"
                 onChange={handleImageUpload}
-                className="hidden" 
-                multiple 
-                accept="image/*"
+                className="hidden"
+                multiple
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 id="image-upload"
               />
               <label
                 htmlFor="image-upload"
-                className="inline-block mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 cursor-pointer"
+                className="inline-block mt-4 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 cursor-pointer transition-colors"
               >
                 Select Images
               </label>
             </div>
+
+            {/* Image Validation Errors */}
+            {imageErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="text-red-800 font-medium mb-2">Image Upload Errors:</h4>
+                <ul className="text-red-700 text-sm space-y-1">
+                  {imageErrors.map((error, index) => (
+                    <li key={index}>• {error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {formData.images.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {formData.images.map((image, index) => (
                   <div key={index} className="relative">
                     <img
-                      src={URL.createObjectURL(image)}
+                      src={URL.createObjectURL(image) || "/placeholder.svg"}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-32 object-cover rounded-lg"
                     />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(index)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                     >
                       ×
                     </button>
@@ -579,6 +660,7 @@ const CreateCar: React.FC = () => {
         <div className="flex flex-col xs:flex-row justify-end space-y-2 xs:space-y-0 xs:space-x-4">
           <button
             type="button"
+            onClick={() => window.history.back()}
             className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
           >
             Cancel
@@ -586,9 +668,28 @@ const CreateCar: React.FC = () => {
           <button
             type="submit"
             disabled={createCar.isPending}
-            className="px-4 sm:px-6 py-2 sm:py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm sm:text-base disabled:opacity-50"
+            className="px-4 sm:px-6 py-2 sm:py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {createCar.isPending ? "Adding Car..." : "Add Car"}
+            {createCar.isPending ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Adding Car...
+              </>
+            ) : (
+              "Add Car"
+            )}
           </button>
         </div>
       </form>
