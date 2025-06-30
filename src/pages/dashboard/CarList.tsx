@@ -1,27 +1,24 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
 import {
-  Search,
+  AlertCircle,
   Car,
-  MapPin,
-  Users,
-  Fuel,
-  Settings,
-  Plus,
-  Eye,
-  Edit,
-  MoreVertical,
   ChevronLeft,
   ChevronRight,
+  DollarSign,
   Filter,
+  Fuel,
   Grid,
   List,
-  DollarSign,
-  AlertCircle,
+  MapPin,
+  Plus,
+  Search,
+  Settings,
+  Users
 } from "lucide-react"
-import { useCar } from "../../api/carManagement"
+import React, { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useCar } from "../../api/carManagement"
 
 type CarWithExtras = {
   id: number
@@ -311,17 +308,15 @@ const CarList: React.FC = () => {
               <div className="flex border border-gray-300 rounded-md">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 ${
-                    viewMode === "grid" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`p-2 ${viewMode === "grid" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   <Grid className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 ${
-                    viewMode === "list" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`p-2 ${viewMode === "list" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   <List className="h-4 w-4" />
                 </button>
@@ -416,7 +411,7 @@ const CarList: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-2">
+                  {/* <div className="flex gap-2">
                     <button className="flex-1 flex items-center justify-center px-3 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors text-sm">
                       <Eye className="h-4 w-4 mr-1" />
                       View
@@ -427,7 +422,7 @@ const CarList: React.FC = () => {
                     <button className="flex items-center justify-center px-3 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
                       <MoreVertical className="h-4 w-4" />
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             ))}
@@ -463,9 +458,9 @@ const CarList: React.FC = () => {
                     >
                       Status {sortBy === "status" && (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -508,7 +503,7 @@ const CarList: React.FC = () => {
                           {formatStatus(car.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex space-x-2">
                           <button className="text-amber-600 hover:text-amber-900">
                             <Eye className="h-4 w-4" />
@@ -520,7 +515,7 @@ const CarList: React.FC = () => {
                             <MoreVertical className="h-4 w-4" />
                           </button>
                         </div>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>
@@ -564,11 +559,10 @@ const CarList: React.FC = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md ${
-                        currentPage === pageNum
-                          ? "bg-amber-500 text-white"
-                          : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${currentPage === pageNum
+                        ? "bg-amber-500 text-white"
+                        : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
+                        }`}
                     >
                       {pageNum}
                     </button>

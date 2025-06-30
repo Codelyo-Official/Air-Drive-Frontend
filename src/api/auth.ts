@@ -1,6 +1,6 @@
 // api/auth.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -62,11 +62,11 @@ export const useAuth = () => {
     onSuccess: (data) => {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      queryClient.setQueryData(['user'], data.user);
+      queryClient.setQueryData(["user"], data.user);
       toast.success("Account created successfully!");
     },
     onError: (error) => {
-      console.error('Signup error:', error);
+      console.error("Signup error:", error);
       toast.error(error.message);
     },
   });
@@ -83,7 +83,9 @@ export const useAuth = () => {
 
       if (!response.ok) {
         const errorMsg =
-          typeof responseData === "object" && responseData !== null && "error" in responseData
+          typeof responseData === "object" &&
+          responseData !== null &&
+          "error" in responseData
             ? responseData.error
             : "Login failed.";
         throw new Error(errorMsg);
@@ -94,13 +96,13 @@ export const useAuth = () => {
     onSuccess: (data) => {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      queryClient.setQueryData(['user'], data.user);
+      queryClient.setQueryData(["user"], data.user);
       toast.success("Login successful!");
     },
     onError: (error) => {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       toast.error(error.message);
-    }
+    },
   });
 
   // Logout Mutation
@@ -124,9 +126,9 @@ export const useAuth = () => {
       toast.success("Logged out successfully!");
     },
     onError: (error) => {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       toast.error(error?.message || "Logout failed");
-    }
+    },
   });
 
   // Helper function to get current user from localStorage

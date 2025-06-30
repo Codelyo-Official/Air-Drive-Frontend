@@ -110,14 +110,14 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Search Form Card */}
-            <div className="max-w-5xl mx-auto mb-8 lg:mb-12">
+            <div className="max-w-2xl mx-auto mb-8 lg:mb-12">
               <div className="bg-white/95 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 border border-white/20 hover:bg-white/100 hover:shadow-3xl transition-all duration-300 mx-4 sm:mx-0">
                 <SearchForm />
               </div>
             </div>
 
             {/*Trust Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 max-w-4xl mx-auto px-4">
+            {/* <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 max-w-4xl mx-auto px-4">
               <div className="text-center group">
                 <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-200">
                    15K+
@@ -142,7 +142,7 @@ const HomePage: React.FC = () => {
                 </div>
                 <div className="text-xs sm:text-sm text-amber-400 mt-1">Average Rating</div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

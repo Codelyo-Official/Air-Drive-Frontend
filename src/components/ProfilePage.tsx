@@ -1,7 +1,7 @@
+import { Camera, Edit2, Mail, MapPin, Phone, Save, Shield, User, X } from "lucide-react"
 import type React from "react"
 import { useState } from "react"
 import { useAuth } from "../api/auth"
-import { User, Mail, Phone, MapPin, Shield, Edit2, Save, X, Camera } from "lucide-react"
 
 const ProfilePage: React.FC = () => {
   const { getCurrentUser } = useAuth()
@@ -301,7 +301,7 @@ const ProfilePage: React.FC = () => {
                   {Math.round(
                     (Object.values(user).filter((value) => value !== null && value !== "").length /
                       Object.keys(user).length) *
-                      100,
+                    100,
                   )}
                   %
                 </p>
@@ -310,7 +310,7 @@ const ProfilePage: React.FC = () => {
           </div>
 
           {/* Actions */}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-8">
+          {/* <div className="bg-white rounded-lg shadow-md p-6 mt-8">
             <h3 className="text-xl font-semibold text-gray-900 mb-6">Account Actions</h3>
 
             <div className="flex flex-wrap gap-4">
@@ -329,7 +329,7 @@ const ProfilePage: React.FC = () => {
                 Delete Account
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -1,21 +1,20 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
 import {
-  Search,
+  AlertCircle,
   Calendar,
   Car,
-  User,
-  Filter,
+  Check,
   ChevronLeft,
   ChevronRight,
-  Check,
-  X,
   Clock,
-  RefreshCw,
   Eye,
-  AlertCircle,
+  Filter,
+  Search,
+  User,
+  X,
 } from "lucide-react"
+import React, { useMemo, useState } from "react"
 import { useBookingAndReport } from "../../api/bookingAndReport"
 
 const statusOptions = [
@@ -224,14 +223,6 @@ const OwnerBookingPage: React.FC = () => {
                   </option>
                 ))}
               </select>
-
-              <button
-                onClick={() => refetch()}
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </button>
             </div>
           </div>
 
@@ -443,11 +434,10 @@ const OwnerBookingPage: React.FC = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md ${
-                        currentPage === pageNum
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${currentPage === pageNum
                           ? "bg-amber-500 text-white"
                           : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       {pageNum}
                     </button>

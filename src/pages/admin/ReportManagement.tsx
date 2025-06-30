@@ -1,24 +1,22 @@
 "use client"
 
-import React from "react"
-import { useState, useMemo } from "react"
 import {
-  Search,
   AlertTriangle,
-  User,
   Car,
-  Eye,
-  Edit,
   Check,
-  X,
   ChevronLeft,
   ChevronRight,
-  RefreshCw,
-  Save,
-  UserX,
+  Edit,
+  Eye,
   Grid,
   List,
+  Save,
+  Search,
+  User,
+  UserX,
+  X,
 } from "lucide-react"
+import React, { useMemo, useState } from "react"
 import { useAdminReports } from "../../api/admin/adminReport"
 
 // Updated interface to match actual API response
@@ -258,7 +256,7 @@ const ReportManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8">
@@ -316,29 +314,19 @@ const ReportManagement = () => {
 
             {/* Controls */}
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => refetch()}
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </button>
-
               {/* View Mode Toggle */}
               <div className="flex border border-gray-300 rounded-md">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 ${
-                    viewMode === "grid" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`p-2 ${viewMode === "grid" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   <Grid className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 ${
-                    viewMode === "list" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`p-2 ${viewMode === "list" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   <List className="h-4 w-4" />
                 </button>
@@ -627,11 +615,10 @@ const ReportManagement = () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md ${
-                        currentPage === pageNum
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${currentPage === pageNum
                           ? "bg-amber-500 text-white"
                           : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       {pageNum}
                     </button>
