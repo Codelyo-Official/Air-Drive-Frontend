@@ -57,6 +57,7 @@ import PrivacyPage from "./components/PrivacyPage"
 import TermsPage from "./components/TermsPage"
 import CreateSupportUser from "./pages/admin/CreateSupportUser"
 {/* Legal Pages */ }
+import UserSupportPage from "./pages/TicketPage"
 
 // Create a client
 const queryClient = new QueryClient()
@@ -85,6 +86,7 @@ function App() {
               <Route path="profiles" element={<ProfilePage />} />
               <Route path="my-bookings" element={<MyBookingsPage />} />
 
+               <Route path="tickets" element={<UserSupportPage />} />
               {/* Legal Pages */}
               <Route path="terms" element={<TermsPage />} />
               <Route path="privacy" element={<PrivacyPage />} />
