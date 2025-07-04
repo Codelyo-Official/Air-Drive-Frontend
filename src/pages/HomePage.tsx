@@ -51,9 +51,12 @@ const HomePage: React.FC = () => {
       );
     }
 
+    // Show only first 3 cars
+    const carsToShow = availableCars.slice(0, 3);
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {availableCars.map(car => (
+        {carsToShow.map(car => (
           <CarCard key={car.id} car={car} />
         ))}
       </div>
@@ -110,7 +113,7 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Search Form Card */}
-            <div className="max-w-2xl mx-auto mb-8 lg:mb-12">
+            <div className=" mx-auto mb-8 lg:mb-12">
               <div className="bg-white/95 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 border border-white/20 hover:bg-white/100 hover:shadow-3xl transition-all duration-300 mx-4 sm:mx-0">
                 <SearchForm />
               </div>
@@ -198,7 +201,7 @@ const HomePage: React.FC = () => {
               {isLoading 
                 ? "Loading our latest vehicles..." 
                 : availableCars.length > 0 
-                  ? `Discover ${availableCars.length} of our newest vehicles` 
+                  ? `Discover our newest vehicles` 
                   : "Check back soon for new vehicles"
               }
             </p>
@@ -206,7 +209,8 @@ const HomePage: React.FC = () => {
 
           <FeaturedCarsSection />
 
-          {availableCars.length > 0 && (
+          {/* Show "View all cars" button only if there are more than 3 cars */}
+          {availableCars.length > 3 && (
             <div className="text-center mt-12">
               <Link 
                 to="/search" 

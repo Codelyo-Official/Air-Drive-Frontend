@@ -132,9 +132,9 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<DashboardHome />} />
+              <Route index element={<Tickets />} />
               <Route path="tickets" element={<Tickets />} />
-              <Route path="vehicles" element={<Vehicles />} />
+              {/* <Route path="vehicles" element={<Vehicles />} /> */}
               {/* <Route
                 path="settings"
                 element={<Settings user={{ name: "John Doe", email: "john@example.com", avatar: "" }} />}

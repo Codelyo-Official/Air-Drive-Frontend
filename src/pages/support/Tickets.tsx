@@ -285,21 +285,21 @@ const SupportDashboard: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        {/* <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {isAdmin ? 'Support Dashboard' : 'My Support Tickets'}
           </h1>
           <p className="text-gray-600 mt-1">
             {isAdmin ? 'Manage customer support tickets' : 'View and manage your support requests'}
           </p>
-        </div>
-        <button 
+        </div> */}
+        {/* <button 
           onClick={() => setShowCreateModal(true)}
           className="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Ticket
-        </button>
+        </button> */}
       </div>
 
       {/* Stats Cards */}
