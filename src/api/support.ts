@@ -237,7 +237,7 @@ export const useSupport = () => {
       return data;
     },
     onSuccess: (data) => {
-      toast.success(`Ticket status updated to ${data.ticket.status}!`);
+      toast.success(`Ticket status updated`);
       queryClient.invalidateQueries({ queryKey: ["adminTickets"] });
       queryClient.invalidateQueries({ queryKey: ["userTickets"] });
     },
