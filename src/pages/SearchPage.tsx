@@ -239,7 +239,7 @@ const SearchPage: React.FC = () => {
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
-      <div className="flex">
+      <div className="flex z-40">
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 xl:hidden" onClick={() => setSidebarOpen(false)} />
@@ -247,7 +247,7 @@ const SearchPage: React.FC = () => {
 
         {/* Sidebar */}
         <div
-          className={`fixed xl:static inset-y-0 left-0 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out xl:translate-x-0 ${
+          className={`z-50 fixed xl:static inset-y-0 left-0 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out xl:translate-x-0 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } pt-16 xl:pt-0 border-r border-gray-200`}
         >
@@ -607,46 +607,52 @@ const SearchPage: React.FC = () => {
         <div className="flex-1 xl:ml-0">
           <div className="container mx-auto px-4 py-6 max-w-7xl">
             {/* Header with Search */}
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="xl:hidden p-3 rounded-lg hover:bg-gray-100 transition-colors self-start"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
+<div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+  <div className="flex flex-col gap-4">
+    {/* Mobile: Menu, Search, and View Toggle in same row */}
+    <div className="flex items-center gap-3">
+      {/* Menu Button - Only visible on mobile */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="xl:hidden flex-shrink-0 p-3 rounded-lg hover:bg-gray-100 transition-colors"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
 
-                <div className="flex-1 relative w-full">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="text"
-                    placeholder="Search by car make, model, or location..."
-                    value={filters.searchTerm}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, searchTerm: e.target.value }))}
-                    className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg"
-                  />
-                </div>
+      {/* Search Input - Takes remaining space */}
+      <div className="flex-1 relative">
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+        <input
+          type="text"
+          placeholder="Search by car make, model, or location..."
+          value={filters.searchTerm}
+          onChange={(e) => setFilters((prev) => ({ ...prev, searchTerm: e.target.value }))}
+          className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg"
+        />
+      </div>
 
-                <div className="flex bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded-md transition-colors ${
-                      viewMode === "grid" ? "bg-white shadow-sm text-amber-600" : "text-gray-600 hover:text-gray-800"
-                    }`}
-                  >
-                    <Grid className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`p-2 rounded-md transition-colors ${
-                      viewMode === "list" ? "bg-white shadow-sm text-amber-600" : "text-gray-600 hover:text-gray-800"
-                    }`}
-                  >
-                    <List className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* View Toggle Buttons - Hidden on mobile, visible on tablet and up */}
+      <div className="hidden sm:flex bg-gray-100 rounded-lg p-1 flex-shrink-0">
+        <button
+          onClick={() => setViewMode("grid")}
+          className={`p-2 rounded-md transition-colors ${
+            viewMode === "grid" ? "bg-white shadow-sm text-amber-600" : "text-gray-600 hover:text-gray-800"
+          }`}
+        >
+          <Grid className="h-5 w-5" />
+        </button>
+        <button
+          onClick={() => setViewMode("list")}
+          className={`p-2 rounded-md transition-colors ${
+            viewMode === "list" ? "bg-white shadow-sm text-amber-600" : "text-gray-600 hover:text-gray-800"
+          }`}
+        >
+          <List className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
             {/* Results Header */}
             <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

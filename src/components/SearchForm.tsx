@@ -92,11 +92,11 @@ const SearchForm: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-5xl mx-auto">
-        <div className="flex items-center justify-center h-64">
+      <div className="bg-white rounded-2xl lg:rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
+        <div className="flex items-center justify-center h-32 sm:h-64">
           <div className="flex items-center space-x-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-            <span className="text-gray-600 text-lg">Loading search options...</span>
+            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-amber-500"></div>
+            <span className="text-gray-600 text-sm sm:text-lg">Loading search options...</span>
           </div>
         </div>
       </div>
@@ -104,33 +104,33 @@ const SearchForm: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 max-w-7xl mx-auto">
+    <div className="bg-white rounded-2xl lg:rounded-3xl shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
       {/* Compact Header */}
-      <div className="text-center mb-6">
-        <div className="flex items-center justify-center gap-3 mb-3">
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-3">
           <div className="bg-amber-500 p-2 rounded-lg shadow-sm">
-            <Car className="h-5 w-5 text-white" />
+            <Car className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Find Your Perfect Car</h2>
-          <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-semibold">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center">Find Your Perfect Car</h2>
+          <span className="bg-amber-100 text-amber-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold">
             {dynamicOptions.totalCars} Available
           </span>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         {/* Primary Row - Location and Dates */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <MapPin size={14} className="inline mr-1 text-amber-500" />
+          <div className="sm:col-span-2 lg:col-span-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+              <MapPin size={12} className="inline mr-1 text-amber-500" />
               Location
             </label>
             <select
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white"
+              className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-sm"
             >
               <option value="">Select location</option>
               {dynamicOptions.locations.map((loc) => (
@@ -143,8 +143,8 @@ const SearchForm: React.FC = () => {
 
           {/* Start Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Calendar size={14} className="inline mr-1 text-amber-500" />
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+              <Calendar size={12} className="inline mr-1 text-amber-500" />
               Pick-up Date
             </label>
             <DatePicker
@@ -155,15 +155,15 @@ const SearchForm: React.FC = () => {
               endDate={endDate}
               minDate={new Date()}
               placeholderText="Select date"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
               dateFormat="MMM dd, yyyy"
             />
           </div>
 
           {/* End Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Calendar size={14} className="inline mr-1 text-amber-500" />
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+              <Calendar size={12} className="inline mr-1 text-amber-500" />
               Return Date
             </label>
             <DatePicker
@@ -174,18 +174,18 @@ const SearchForm: React.FC = () => {
               endDate={endDate}
               minDate={startDate || new Date()}
               placeholderText="Select date"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
               dateFormat="MMM dd, yyyy"
             />
           </div>
 
           {/* Search Button */}
-          <div className="flex items-end">
+          <div className="sm:col-span-2 lg:col-span-1 flex items-end">
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg"
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg text-sm sm:text-base"
             >
-              <Search size={18} className="mr-2" />
+              <Search size={16} className="mr-2" />
               Search Cars
             </button>
           </div>
@@ -193,12 +193,12 @@ const SearchForm: React.FC = () => {
 
         {/* Advanced Filters Row */}
         <div className="border-t border-gray-200 pt-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
               <Settings className="h-4 w-4 text-amber-500 mr-2" />
               Advanced Filters
             </h3>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
               <span>
                 💰 ${dynamicOptions.minPrice} - ${dynamicOptions.maxPrice}
               </span>
@@ -207,14 +207,14 @@ const SearchForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
             {/* Car Make */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Make</label>
+            <div className="sm:col-span-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Make</label>
               <select
                 value={make}
                 onChange={(e) => setMake(e.target.value)}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-sm"
+                className="w-full p-2 sm:p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-xs sm:text-sm"
               >
                 <option value="">Any</option>
                 {dynamicOptions.makes.map((makeOption) => (
@@ -226,12 +226,12 @@ const SearchForm: React.FC = () => {
             </div>
 
             {/* Seats */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Seats</label>
+            <div className="sm:col-span-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Seats</label>
               <select
                 value={seats}
                 onChange={(e) => setSeats(e.target.value)}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-sm"
+                className="w-full p-2 sm:p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-xs sm:text-sm"
               >
                 <option value="">Any</option>
                 {dynamicOptions.seats.map((seat) => (
@@ -243,12 +243,12 @@ const SearchForm: React.FC = () => {
             </div>
 
             {/* Transmission */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Transmission</label>
+            <div className="sm:col-span-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Transmission</label>
               <select
                 value={transmission}
                 onChange={(e) => setTransmission(e.target.value)}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-sm"
+                className="w-full p-2 sm:p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-xs sm:text-sm"
               >
                 <option value="">Any</option>
                 {dynamicOptions.transmissions.map((trans) => (
@@ -260,12 +260,12 @@ const SearchForm: React.FC = () => {
             </div>
 
             {/* Fuel Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Fuel</label>
+            <div className="sm:col-span-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Fuel</label>
               <select
                 value={fuelType}
                 onChange={(e) => setFuelType(e.target.value)}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-sm"
+                className="w-full p-2 sm:p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white text-xs sm:text-sm"
               >
                 <option value="">Any</option>
                 {dynamicOptions.fuelTypes.map((fuel) => (
@@ -276,42 +276,47 @@ const SearchForm: React.FC = () => {
               </select>
             </div>
 
-            {/* Price Range - Compact */}
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            {/* Price Range - Mobile Optimized */}
+            <div className="sm:col-span-2 xl:col-span-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                 Price Range: ${priceRange[0]} - ${priceRange[1]}
               </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={priceRange[0]}
-                  min={dynamicOptions.minPrice}
-                  max={dynamicOptions.maxPrice}
-                  onChange={(e) =>
-                    setPriceRange([Number.parseInt(e.target.value) || dynamicOptions.minPrice, priceRange[1]])
-                  }
-                  className="w-20 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500"
-                />
+              <div className="space-y-2">
+                {/* Range Slider */}
                 <input
                   type="range"
                   min={dynamicOptions.minPrice}
                   max={dynamicOptions.maxPrice}
                   value={priceRange[1]}
                   onChange={(e) => setPriceRange([priceRange[0], Number.parseInt(e.target.value)])}
-                  className="flex-1 h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer"
                 />
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={priceRange[1]}
-                  min={dynamicOptions.minPrice}
-                  max={dynamicOptions.maxPrice}
-                  onChange={(e) =>
-                    setPriceRange([priceRange[0], Number.parseInt(e.target.value) || dynamicOptions.maxPrice])
-                  }
-                  className="w-20 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500"
-                />
+                {/* Min/Max Inputs */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={priceRange[0]}
+                    min={dynamicOptions.minPrice}
+                    max={dynamicOptions.maxPrice}
+                    onChange={(e) =>
+                      setPriceRange([Number.parseInt(e.target.value) || dynamicOptions.minPrice, priceRange[1]])
+                    }
+                    className="flex-1 p-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-amber-500"
+                  />
+                  <span className="text-gray-500 text-xs">to</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={priceRange[1]}
+                    min={dynamicOptions.minPrice}
+                    max={dynamicOptions.maxPrice}
+                    onChange={(e) =>
+                      setPriceRange([priceRange[0], Number.parseInt(e.target.value) || dynamicOptions.maxPrice])
+                    }
+                    className="flex-1 p-2 border border-gray-300 rounded-lg text-xs sm:text-sm focus:ring-2 focus:ring-amber-500"
+                  />
+                </div>
               </div>
             </div>
           </div>
