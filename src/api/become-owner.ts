@@ -31,6 +31,9 @@ export const useBecomeOwner = () => {
     },
     onSuccess: (data) => {
       toast.success(data.detail || "User type updated to owner successfully.");
+      // Logout user after success
+      localStorage.removeItem("authToken");
+      window.location.href = "/login";
     },
     onError: (error) => {
       console.error("Become Owner Error:", error);
