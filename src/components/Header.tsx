@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../api/auth"
 
 interface HeaderProps {
-  isScrolled: boolean
+  isScrolled?: boolean
 }
 
 const Header: React.FC<HeaderProps> = () => {
@@ -63,12 +63,12 @@ const Header: React.FC<HeaderProps> = () => {
               Find cars
             </Link>
 
-             {isAuthenticated() && (userType === "regular") && (
+            {isAuthenticated() && userType === "regular" && (
               <Link
                 to="/my-bookings"
                 className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-amber-600 transition-colors"
               >
-               My Bookings
+                My Bookings
               </Link>
             )}
             <Link to="/about" className="text-sm font-medium text-white hover:text-amber-500">
@@ -81,9 +81,8 @@ const Header: React.FC<HeaderProps> = () => {
               Contact
             </Link> */}
 
-
             {/* Role-based Navigation */}
-            {isAuthenticated() && (userType === "regular") && !isRentYourCar && (
+            {isAuthenticated() && userType === "regular" && !isRentYourCar && (
               <Link
                 to="/rent-your-car"
                 className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-amber-600 transition-colors"
@@ -100,7 +99,7 @@ const Header: React.FC<HeaderProps> = () => {
               </Link>
             )}
 
-            {isAuthenticated() && (userType === "support") && (
+            {isAuthenticated() && userType === "support" && (
               <Link to="/support">
                 <button className="bg-amber-500 text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-amber-600 transition-colors">
                   Support
@@ -137,7 +136,7 @@ const Header: React.FC<HeaderProps> = () => {
                         Dashboard
                       </Link>
                     )}
-                      {(userType === "regular") && (
+                    {userType === "regular" && (
                       <Link to="/tickets" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         Ticket
                       </Link>
@@ -185,7 +184,8 @@ const Header: React.FC<HeaderProps> = () => {
               >
                 Find cars
               </Link>
-              {isAuthenticated() && (
+              {/* My Bookings for regular users only */}
+              {isAuthenticated() && userType === "regular" && (
                 <Link
                   to="/my-bookings"
                   className="text-white hover:text-amber-500 font-medium"
@@ -217,39 +217,58 @@ const Header: React.FC<HeaderProps> = () => {
               </Link> */}
 
               {/* Role-based Mobile Links */}
-              {isAuthenticated() && (userType === "owner" || userType === "admin") && (
-                <>
-                  <Link
-                    to="/dashboard"
-                    className="text-white hover:text-amber-500 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    to="/support"
-                    className="text-white hover:text-amber-500 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Support
-                  </Link>
-                  <Link
-                    to="/rent-your-car"
-                    className="text-white hover:text-amber-500 font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Rent your car
-                  </Link>
-                </>
+              {/* Rent your car for regular users only and not on /rent-your-car */}
+              {isAuthenticated() && userType === "regular" && !isRentYourCar && (
+                <Link
+                  to="/rent-your-car"
+                  className="text-white hover:text-amber-500 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Rent your car
+                </Link>
               )}
 
+              {/* Dashboard for owner/admin */}
+              {isAuthenticated() && (userType === "owner" || userType === "admin") && (
+                <Link
+                  to="/dashboard"
+                  className="text-white hover:text-amber-500 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
+
+              {/* Support for support users */}
+              {isAuthenticated() && userType === "support" && (
+                <Link
+                  to="/support"
+                  className="text-white hover:text-amber-500 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Support
+                </Link>
+              )}
+
+              {/* Admin Panel for admin */}
               {isAuthenticated() && userType === "admin" && (
                 <Link
                   to="/admin"
                   className="text-white hover:text-amber-500 font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Admin Panel
+                  Admin
+                </Link>
+              )}
+
+              {/* Ticket for regular users */}
+              {isAuthenticated() && userType === "regular" && (
+                <Link
+                  to="/tickets"
+                  className="text-white hover:text-amber-500 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Ticket
                 </Link>
               )}
 
@@ -257,15 +276,15 @@ const Header: React.FC<HeaderProps> = () => {
               {isAuthenticated() ? (
                 <>
                   <Link
-                    to="/profile"
+                    to="/profiles"
                     className="text-white hover:text-amber-500 font-medium"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Profile
                   </Link>
                   <button
-                    onClick={() => {
-                      handleLogout()
+                    onClick={async () => {
+                      await handleLogout()
                       setIsMenuOpen(false)
                     }}
                     className="text-left text-white hover:text-amber-500 font-medium"

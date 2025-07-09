@@ -28,14 +28,14 @@ import MyBookingsPage from "./pages/MyBookingsPage"
 import CarList from "./pages/dashboard/CarList"
 import Chat from "./pages/dashboard/Chat"
 import CreateCar from "./pages/dashboard/CreateCar"
-import DashboardHome from "./pages/dashboard/Dashboard"
+// import DashboardHome from "./pages/dashboard/Dashboard"
 import OwnerBookingPage from "./pages/dashboard/OwnerBookingPage"
 // import Profile from "./pages/dashboard/Profile"
 
 // Support Pages
 // import Settings from "./pages/support/Profile"
 import Tickets from "./pages/support/Tickets"
-import Vehicles from "./pages/support/Vehicles"
+// import Vehicles from "./pages/support/Vehicles"
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard"

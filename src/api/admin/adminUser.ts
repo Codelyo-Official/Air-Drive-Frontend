@@ -129,15 +129,14 @@ export const useAdmin = () => {
         throw new Error(data.detail || "Failed to delete user.")
       }
 
-      return response.json()
+      // return response.json()
     },
-    onSuccess: (data) => {
-      toast.success(data.message || "User deleted successfully.")
+    onSuccess: () => {
+      toast.success("User deleted successfully.")
       queryClient.invalidateQueries({ queryKey: ["adminUsers"] })
     },
-    onError: (error) => {
-      console.error("Delete User Error:", error)
-      toast.error(error.message)
+    onError: () => {
+      toast.error("Failed to delete user.")
     },
   })
 

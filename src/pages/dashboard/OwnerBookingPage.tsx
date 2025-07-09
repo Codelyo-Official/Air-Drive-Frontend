@@ -1,5 +1,4 @@
-"use client"
-
+//OwnerBookingPage.tsx
 import {
   AlertCircle,
   Calendar,

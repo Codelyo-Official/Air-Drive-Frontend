@@ -1,23 +1,7 @@
+"use client"
+
 import { useState } from "react"
 import { useAdminRevenue } from "../../api/admin/adminRevenue"
-
-interface RevenueData {
-  period: string
-  total_revenue: string
-  booking_count: number
-  commission_earned: string
-  average_booking_value: string
-  growth_rate?: number
-}
-
-interface RevenueStats {
-  total_revenue: string
-  total_bookings: number
-  total_commission: string
-  average_booking_value: string
-  revenue_growth: number
-  booking_growth: number
-}
 
 const Revenue = () => {
   const { useRevenueReport } = useAdminRevenue()
@@ -147,7 +131,6 @@ const Revenue = () => {
               <option value="yearly">Yearly</option>
             </select>
           </div>
-
           {/* Start Date */}
           <div>
             <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
@@ -161,7 +144,6 @@ const Revenue = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             />
           </div>
-
           {/* End Date */}
           <div>
             <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">
@@ -176,7 +158,6 @@ const Revenue = () => {
             />
           </div>
         </div>
-
         <div className="mt-4 flex gap-2">
           <button
             onClick={clearDateFilters}
@@ -192,138 +173,139 @@ const Revenue = () => {
         </div>
       </div>
 
-      {/* Stats Overview */}
-      {revenueData?.stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          {/* Total Revenue */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                    />
-                  </svg>
-                </div>
+      {/* Stats Overview - Show data or zeros */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {/* Total Revenue */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                  />
+                </svg>
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">
-                      {formatCurrency(revenueData.stats.total_revenue)}
-                    </div>
+            </div>
+            <div className="ml-5 w-0 flex-1">
+              <dl>
+                <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
+                <dd className="flex items-baseline">
+                  <div className="text-2xl font-semibold text-gray-900">
+                    {formatCurrency(revenueData?.stats?.total_revenue || "0")}
+                  </div>
+                  {revenueData?.stats?.revenue_growth !== undefined && (
                     <div
                       className={`ml-2 flex items-baseline text-sm font-semibold ${getGrowthStyle(revenueData.stats.revenue_growth)}`}
                     >
                       {formatPercentage(revenueData.stats.revenue_growth)}
                     </div>
-                  </dd>
-                </dl>
-              </div>
+                  )}
+                </dd>
+              </dl>
             </div>
           </div>
+        </div>
 
-          {/* Total Bookings */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                </div>
+        {/* Total Bookings */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Bookings</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">
-                      {revenueData.stats.total_bookings.toLocaleString()}
-                    </div>
+            </div>
+            <div className="ml-5 w-0 flex-1">
+              <dl>
+                <dt className="text-sm font-medium text-gray-500 truncate">Total Bookings</dt>
+                <dd className="flex items-baseline">
+                  <div className="text-2xl font-semibold text-gray-900">
+                    {(revenueData?.stats?.total_bookings || 0).toLocaleString()}
+                  </div>
+                  {revenueData?.stats?.booking_growth !== undefined && (
                     <div
                       className={`ml-2 flex items-baseline text-sm font-semibold ${getGrowthStyle(revenueData.stats.booking_growth)}`}
                     >
                       {formatPercentage(revenueData.stats.booking_growth)}
                     </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-
-          {/* Commission Earned */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Commission Earned</dt>
-                  <dd className="text-2xl font-semibold text-gray-900">
-                    {formatCurrency(revenueData.stats.total_commission)}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-
-          {/* Average Booking Value */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Avg. Booking Value</dt>
-                  <dd className="text-2xl font-semibold text-gray-900">
-                    {formatCurrency(revenueData.stats.average_booking_value)}
-                  </dd>
-                </dl>
-              </div>
+                  )}
+                </dd>
+              </dl>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Commission Earned */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="ml-5 w-0 flex-1">
+              <dl>
+                <dt className="text-sm font-medium text-gray-500 truncate">Commission Earned</dt>
+                <dd className="text-2xl font-semibold text-gray-900">
+                  {formatCurrency(revenueData?.stats?.total_commission || "0")}
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        {/* Average Booking Value */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="ml-5 w-0 flex-1">
+              <dl>
+                <dt className="text-sm font-medium text-gray-500 truncate">Avg. Booking Value</dt>
+                <dd className="text-2xl font-semibold text-gray-900">
+                  {formatCurrency(revenueData?.stats?.average_booking_value || "0")}
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Revenue Chart */}
-      {revenueData?.data && revenueData.data.length > 0 && (
+      {revenueData?.data && revenueData.data.length > 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
           <div className="space-y-4">
             {revenueData.data.map((item, index) => {
               const revenue = Number.parseFloat(item.total_revenue)
               const percentage = maxRevenue > 0 ? (revenue / maxRevenue) * 100 : 0
-
               return (
                 <div key={index} className="flex items-center space-x-4">
                   <div className="w-24 text-sm text-gray-600 flex-shrink-0">
@@ -351,40 +333,60 @@ const Revenue = () => {
             })}
           </div>
         </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+          <div className="text-center py-12">
+            <div className="text-gray-500">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No revenue data available</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Revenue data will appear here once bookings are made in the selected period.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Detailed Revenue Table */}
-      {revenueData?.data && revenueData.data.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Detailed Revenue Report</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Period
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Revenue
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Bookings
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Commission
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Avg. Value
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Growth
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {revenueData.data.map((item, index) => (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Detailed Revenue Report</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Period
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total Revenue
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Bookings
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Commission
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Avg. Value
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Growth
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {revenueData?.data && revenueData.data.length > 0 ? (
+                revenueData.data.map((item, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {formatPeriodLabel(item.period, revenueData.period_type)}
@@ -411,32 +413,21 @@ const Revenue = () => {
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <div className="text-gray-500">
+                      <p className="text-sm">No data available for the selected period</p>
+                      <p className="text-xs mt-1">Try selecting a different date range or report type</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
-
-      {/* No Data State */}
-      {(!revenueData?.data || revenueData.data.length === 0) && !isLoading && (
-        <div className="text-center py-12">
-          <div className="text-gray-500">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No revenue data found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Try adjusting your date range or report type to see revenue data.
-            </p>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
