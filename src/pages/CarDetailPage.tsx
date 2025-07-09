@@ -1,6 +1,4 @@
-"use client"
-
-import { ArrowLeft, Bluetooth, Calendar, Car, CheckCircle, ChevronLeft, ChevronRight, CreditCard, Fuel, Loader2, MapPin, Navigation, Settings, Shield, Users, Wifi, X, AlertTriangle, Clock, Star, Info } from 'lucide-react'
+import { ArrowLeft, Bluetooth, Calendar, Car, CheckCircle, ChevronLeft, ChevronRight, CreditCard, Fuel, Loader2, MapPin, Navigation, Settings, Shield, Users, Wifi, X, AlertTriangle, Clock } from 'lucide-react'
 import React, { useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { useBookingAndReport } from "../api/bookingAndReport"
@@ -46,7 +44,9 @@ const CarDetailPage: React.FC = () => {
 
   // Check if user is authenticated and is regular user
   const user = getCurrentUser()
-  const isRegularUser = isAuthenticated() && user?.user_type === "regular"
+  const isSupportUser = isAuthenticated() && user?.user_type === "support"
+  const isOwnerUser = isAuthenticated() && user?.user_type === "owner"
+  const isAdminUser = isAuthenticated() && user?.user_type === "admin"
 
   // Find the specific car by ID
   const car = useMemo(() => {
@@ -81,16 +81,16 @@ const CarDetailPage: React.FC = () => {
   // Check if user has existing booking for this car
   const hasExistingBooking = useMemo(() => {
     if (!car || !bookings.length) return false
-    
+
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    
+
     return bookings.some((booking: Booking) => {
       const isThisCar = booking.car.id === car.id
       const endDate = new Date(booking.end_date)
       const isNotPast = endDate >= today
       const isActiveStatus = ["pending", "approved"].includes(booking.status)
-      
+
       return isThisCar && isNotPast && isActiveStatus
     })
   }, [car, bookings])
@@ -98,16 +98,16 @@ const CarDetailPage: React.FC = () => {
   // Check if selected dates conflict with existing bookings
   const hasDateConflict = useMemo(() => {
     if (!car || !selectedStartDate || !selectedEndDate || !bookings.length) return false
-    
+
     const selectedStart = new Date(selectedStartDate)
     const selectedEnd = new Date(selectedEndDate)
-    
+
     return bookings.some((booking: Booking) => {
       if (booking.car.id !== car.id || !["pending", "approved"].includes(booking.status)) return false
-      
+
       const bookingStart = new Date(booking.start_date)
       const bookingEnd = new Date(booking.end_date)
-      
+
       // Check for date overlap
       return selectedStart <= bookingEnd && selectedEnd >= bookingStart
     })
@@ -116,10 +116,10 @@ const CarDetailPage: React.FC = () => {
   // Check if dates are within available periods
   const isDateAvailable = useMemo(() => {
     if (!car || !selectedStartDate || !selectedEndDate) return false
-    
+
     const selectedStart = new Date(selectedStartDate)
     const selectedEnd = new Date(selectedEndDate)
-    
+
     return car.availability?.some((period) => {
       const availableStart = new Date(period.start_date)
       const availableEnd = new Date(period.end_date)
@@ -134,7 +134,7 @@ const CarDetailPage: React.FC = () => {
     const endDate = new Date(selectedEndDate)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    
+
     return (
       startDate >= today &&
       endDate > startDate &&
@@ -161,26 +161,26 @@ const CarDetailPage: React.FC = () => {
       setIsAuthModalOpen(true)
       return false
     }
-    
+
     if (user?.user_type !== "regular") {
       setAuthModalType(action)
       setIsAuthModalOpen(true)
       return false
     }
-    
+
     return true
   }
 
   // Handle booking attempt
   const handleBookingAttempt = () => {
     if (!handleAuthCheck("booking")) return
-    
+
     const errorMessage = getBookingErrorMessage()
     if (errorMessage) {
       setBookingError(errorMessage)
       return
     }
-    
+
     setBookingError("")
     setIsBookingModalOpen(true)
   }
@@ -339,7 +339,7 @@ const CarDetailPage: React.FC = () => {
           alt={`${car.make} ${car.model}`}
           className="w-full h-full object-cover"
         />
-        
+
         {/* Image Navigation */}
         {carImages.length > 1 && (
           <>
@@ -364,11 +364,10 @@ const CarDetailPage: React.FC = () => {
         {/* Status Badge */}
         <div className="absolute top-4 right-4">
           <span
-            className={`px-4 py-2 rounded-full text-sm font-semibold shadow-lg ${
-              car.status === "available"
-                ? "bg-green-100 text-green-800 border border-green-200"
-                : "bg-red-100 text-red-800 border border-red-200"
-            }`}
+            className={`px-4 py-2 rounded-full text-sm font-semibold shadow-lg ${car.status === "available"
+              ? "bg-green-100 text-green-800 border border-green-200"
+              : "bg-red-100 text-red-800 border border-red-200"
+              }`}
           >
             {car.status.charAt(0).toUpperCase() + car.status.slice(1)}
           </span>
@@ -376,8 +375,8 @@ const CarDetailPage: React.FC = () => {
 
         {/* Car Rating (if available) */}
         {/* <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-1"> */}
-          {/* <Star size={16} className="text-yellow-500 fill-yellow-500" /> */}
-          {/* <span className="text-sm font-semibold">4.8</span>
+        {/* <Star size={16} className="text-yellow-500 fill-yellow-500" /> */}
+        {/* <span className="text-sm font-semibold">4.8</span>
           <span className="text-xs text-gray-600">(24 reviews)</span> */}
         {/* </div> */}
       </div>
@@ -415,14 +414,17 @@ const CarDetailPage: React.FC = () => {
               </div>
 
               {/* Report Button */}
-              <div className="flex justify-end mb-4">
-                <button
-                  onClick={handleReportAttempt}
-                  className="px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-200"
-                >
-                  Report this car
-                </button>
-              </div>
+              {!isSupportUser && !isOwnerUser && !isAdminUser && (
+                <div className="flex justify-end mb-4">
+                  <button
+                    onClick={handleReportAttempt}
+                    className="px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium border border-red-200"
+                  >
+                    Report this car
+                  </button>
+                </div>
+              )}
+
 
               {/* Car Specifications */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 py-6 border-t border-b border-gray-200">
@@ -625,14 +627,28 @@ const CarDetailPage: React.FC = () => {
               {/* Book Button */}
               <button
                 onClick={handleBookingAttempt}
-                disabled={createBooking.isPending}
-                className={`w-full py-4 rounded-xl font-semibold mb-4 transition-all flex items-center justify-center ${
-                  createBooking.isPending
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-amber-500 text-white hover:bg-amber-600 shadow-lg hover:shadow-xl"
-                }`}
+                disabled={isSupportUser || isOwnerUser || isAdminUser || createBooking.isPending}
+                className={`w-full py-4 rounded-xl font-semibold mb-4 transition-all flex items-center justify-center ${isSupportUser || isOwnerUser || isAdminUser || createBooking.isPending
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-amber-500 text-white hover:bg-amber-600 shadow-lg hover:shadow-xl"
+                  }`}
               >
-                {createBooking.isPending ? (
+                {isSupportUser ? (
+                  <>
+                    <AlertTriangle size={20} className="mr-2" />
+                    You are a support team member. Booking is not allowed.
+                  </>
+                ) : isOwnerUser ? (
+                  <>
+                    <AlertTriangle size={20} className="mr-2" />
+                    You are an owner. Booking is for regular users only.
+                  </>
+                ) : isAdminUser ? (
+                  <>
+                    <AlertTriangle size={20} className="mr-2" />
+                    Admins cannot make bookings.
+                  </>
+                ) : createBooking.isPending ? (
                   <>
                     <Loader2 size={20} className="mr-2 animate-spin" />
                     Processing...
@@ -681,7 +697,7 @@ const CarDetailPage: React.FC = () => {
                 {car.make} {car.model} for {rentalDays} day{rentalDays > 1 ? "s" : ""}
               </p>
             </div>
-            
+
             <div className="space-y-4 mb-6">
               <div className="flex justify-between">
                 <span className="text-gray-600">Dates:</span>
@@ -772,7 +788,7 @@ const CarDetailPage: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Report this car</h2>
               <p className="text-gray-600">Help us maintain quality by reporting issues</p>
             </div>
-            
+
             <form onSubmit={handleReportSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

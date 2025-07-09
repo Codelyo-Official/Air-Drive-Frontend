@@ -5,128 +5,43 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 interface AdminReport {
   id: number
-  report_type: "user" | "car"
+  report_type: "car"
   status: "pending" | "resolved" | "dismissed"
-  reporter: {
-    id: number
-    username: string
-    email: string
-    first_name: string
-    last_name: string
-  }
-  reported_user?: {
-    id: number
-    username: string
-    email: string
-    first_name: string
-    last_name: string
-  }
-  reported_car?: {
-    id: number
-    make: string
-    model: string
-    year: number
-    license_plate: string
-    owner: {
-      id: number
-      username: string
-      first_name: string
-      last_name: string
-    }
-  }
-  reason: string
-  description: string
+  reason?: string
+  reported_user_id?: number | null
+  reported_car_id?: number | null
   admin_notes?: string
-  created_at: string
-  updated_at: string
-  resolved_at?: string
-  resolved_by?: {
-    id: number
-    username: string
-    first_name: string
-    last_name: string
-  }
+  created_at?: string
+  updated_at?: string
 }
 
+// Payload for updating a report
 interface UpdateReportPayload {
-  report_id: number
-  updates: {
-    status?: "pending" | "resolved" | "dismissed"
-    admin_notes?: string
-    suspend_user?: boolean
-    remove_car?: boolean
-  }
+  status?: "pending" | "resolved" | "dismissed"
+  admin_notes?: string
 }
 
+// Response from PUT /api/admin/reports/{report_id}/
 interface UpdateReportResponse {
   id: number
-  report_type: "user" | "car"
+  report_type: "car"
   status: "pending" | "resolved" | "dismissed"
-  reporter: {
-    id: number
-    username: string
-    email: string
-    first_name: string
-    last_name: string
-  }
-  reported_user?: {
-    id: number
-    username: string
-    email: string
-    first_name: string
-    last_name: string
-  }
-  reported_car?: {
-    id: number
-    make: string
-    model: string
-    year: number
-    license_plate: string
-    owner: {
-      id: number
-      username: string
-      first_name: string
-      last_name: string
-    }
-  }
-  reason: string
-  description: string
   admin_notes?: string
-  created_at: string
-  updated_at: string
-  resolved_at?: string
-  resolved_by?: {
-    id: number
-    username: string
-    first_name: string
-    last_name: string
-  }
 }
 
 export const useAdminReports = () => {
   const queryClient = useQueryClient()
 
-  // Fetch all reports with optional filters
-  const useAdminReportsList = (filters?: {
-    report_type?: string
-    status?: string
-  }) => {
+  // Fetch all admin reports
+  const useAdminReportsList = () => {
     return useQuery<AdminReport[], Error>({
-      queryKey: ["adminReports", filters],
+      queryKey: ["adminReports"],
       queryFn: async () => {
         const token = localStorage.getItem("authToken")
+        if (!token) throw new Error("No authentication token found")
 
-        if (!token) {
-          throw new Error("No authentication token found")
-        }
-
-        const url = new URL(`${API_BASE_URL}/api/admin/reports/`)
-        if (filters?.report_type) url.searchParams.append("report_type", filters.report_type)
-        if (filters?.status) url.searchParams.append("status", filters.status)
-
-        console.log("Fetching reports from:", url.toString())
-
-        const response = await fetch(url.toString(), {
+        const url = `${API_BASE_URL}/api/admin/reports/`
+        const response = await fetch(url, {
           method: "GET",
           headers: {
             Authorization: `Token ${token}`,
@@ -135,86 +50,44 @@ export const useAdminReports = () => {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          console.error("Fetch reports error:", response.status, errorData)
-          throw new Error(errorData.detail || `Failed to fetch reports. Status: ${response.status}`)
+          const data = await response.json()
+          throw new Error(data.detail || "Failed to fetch admin users.")
         }
 
-        const data = await response.json()
-        console.log("Reports fetched successfully:", data)
-        return data
+        return response.json()
       },
     })
   }
 
-  // Update report - using PUT method as specified in backend
-  const updateReport = useMutation<UpdateReportResponse, Error, UpdateReportPayload>({
-    mutationFn: async ({ report_id, updates }) => {
+  // Update a report (PUT /api/admin/reports/{report_id}/)
+  const updateReport = useMutation<UpdateReportResponse, Error, { report_id: number; payload: UpdateReportPayload }>({
+    mutationFn: async ({ report_id, payload }) => {
       const token = localStorage.getItem("authToken")
+      if (!token) throw new Error("No authentication token found")
+      if (!report_id || report_id <= 0) throw new Error(`Invalid report ID: ${report_id}`)
 
-      if (!token) {
-        throw new Error("No authentication token found")
-      }
-
-      // Clean up the updates object - remove undefined values
-      const cleanUpdates = Object.entries(updates).reduce(
-        (acc, [key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
-            acc[key] = value
-          }
-          return acc
-        },
-        {} as Record<string, any>,
-      )
-
-      console.log("Updating report:", report_id, "with cleaned updates:", cleanUpdates)
-
-      const response = await fetch(`${API_BASE_URL}/api/admin/reports/${report_id}/`, {
+      const url = `${API_BASE_URL}/api/admin/reports/${report_id}/`
+      const response = await fetch(url, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Token ${token}`,
         },
-        body: JSON.stringify(cleanUpdates),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error("Update report error:", response.status, errorData)
-
-        // Handle different types of errors
-        if (response.status === 400) {
-          const errorMessage = Object.entries(errorData)
-            .map(([key, value]) => {
-              if (Array.isArray(value)) {
-                return `${key}: ${value.join(", ")}`
-              } else if (typeof value === "object" && value !== null) {
-                return `${key}: ${JSON.stringify(value)}`
-              } else {
-                return `${key}: ${value}`
-              }
-            })
-            .join("; ")
-          throw new Error(errorMessage || "Invalid data provided")
-        } else if (response.status === 403) {
-          throw new Error("You don't have permission to update this report")
-        } else if (response.status === 404) {
-          throw new Error("Report not found")
-        } else {
-          throw new Error(errorData.detail || `Failed to update report. Status: ${response.status}`)
-        }
+        const data = await response.json()
+        throw new Error(data.detail || "Failed to fetch admin users.")
       }
 
-      const data = await response.json()
-      console.log("Report updated successfully:", data)
-      return data
+      return response.json()
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Report updated successfully.")
       queryClient.invalidateQueries({ queryKey: ["adminReports"] })
     },
     onError: (error) => {
-      console.error("Update Report Error:", error)
       toast.error(error.message)
     },
   })

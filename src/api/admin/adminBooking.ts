@@ -2,33 +2,38 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "react-toastify"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-
 interface AdminBooking {
   id: number
-  user: {
-    id: number
-    username: string
-    email: string
-    first_name: string
-    last_name: string
-  }
+  user: number
   car: {
     id: number
     make: string
     model: string
     year: number
+    color: string
     license_plate: string
+    description: string
     daily_rate: string
+    location: string
+    latitude: number
+    longitude: number
+    seats: number
+    transmission: string
+    fuel_type: string
+    status: string
+    auto_approve_bookings: boolean
+    features: Array<{ name: string }>
+    availability: Array<{ start_date: string; end_date: string }>
+    images: Array<{ id: number; image: string; is_primary: boolean }>
   }
   start_date: string
   end_date: string
-  total_amount: string
+  total_cost: string
+  platform_fee: string
+  owner_payout: string
   status: "pending" | "approved" | "rejected" | "completed"
   created_at: string
   updated_at: string
-  pickup_location?: string
-  dropoff_location?: string
-  notes?: string
 }
 
 interface UpdateBookingPayload {
@@ -182,7 +187,7 @@ export const useAdminBookings = () => {
       console.log("Booking updated successfully:", data)
       return data
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Booking updated successfully.")
       queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
     },

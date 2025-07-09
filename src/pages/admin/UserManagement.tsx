@@ -17,7 +17,6 @@ import {
   X,
   AlertTriangle,
   Mail,
-  MoreVertical,
 } from "lucide-react"
 import { useAdmin } from "../../api/admin/adminUser"
 
@@ -540,9 +539,6 @@ const UserManagement = () => {
                             title="Delete user"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </button>
-                          <button className="text-gray-600 hover:text-gray-900" title="More options">
-                            <MoreVertical className="h-4 w-4" />
                           </button>
                         </div>
                       )}
