@@ -1,30 +1,19 @@
-"use client"
-
-import {
-  AlertTriangle,
-  Car,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Eye,
-  Grid,
-  List,
-  Save,
-  Search,
-  User,
-  UserX,
-  X,
-} from "lucide-react"
+// ReportManagement.tsx
+import { AlertTriangle, Car, ChevronLeft, ChevronRight, Edit, Eye, Grid, List, Save, Search, X } from "lucide-react"
 import React, { useMemo, useState } from "react"
 import { useAdminReports } from "../../api/admin/adminReport"
 
-// Updated interface to match actual API response
+// Use the interface from your API file
 interface AdminReport {
-  report_type: "user" | "car"
+  id?: number
+  report_type: "car"
   reason: string
   reported_user_id: number | null
   reported_car_id: number | null
+  status?: "pending" | "resolved" | "dismissed"
+  admin_notes?: string
+  created_at?: string
+  updated_at?: string
 }
 
 const ReportManagement = () => {
@@ -32,7 +21,6 @@ const ReportManagement = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    report_type: "",
     search: "",
   })
 
@@ -47,37 +35,30 @@ const ReportManagement = () => {
   const [showDetailsModal, setShowDetailsModal] = useState<AdminReport | null>(null)
   const [editingReport, setEditingReport] = useState<AdminReport | null>(null)
   const [editForm, setEditForm] = useState({
-    status: "pending",
+    status: "pending" as "pending" | "resolved" | "dismissed",
     admin_notes: "",
-    suspend_user: false,
-    remove_car: false,
   })
 
-  // Fetch reports with current filters
-  const { data: reports, isLoading, error, refetch } = useAdminReportsList(filters)
+  // Fetch reports - no filters parameter needed based on your API
+  const { data: reports, isLoading, error, refetch } = useAdminReportsList()
 
   // Filter and sort reports
   const filteredAndSortedReports = useMemo(() => {
     if (!reports || !Array.isArray(reports)) return []
 
     const filtered = reports.filter((report) => {
-      // Add null checks for report properties
       if (!report || typeof report !== "object") return false
 
       const searchLower = filters.search?.toLowerCase() || ""
       const reason = report.reason?.toString().toLowerCase() || ""
-      const reportType = report.report_type?.toString().toLowerCase() || ""
 
-      const matchesSearch = !searchLower || reason.includes(searchLower) || reportType.includes(searchLower)
-      const matchesType = !filters.report_type || report.report_type === filters.report_type
-
-      return matchesSearch && matchesType
+      const matchesSearch = !searchLower || reason.includes(searchLower)
+      return matchesSearch
     })
 
     // Sort reports
     filtered.sort((a, b) => {
       let comparison = 0
-
       try {
         switch (sortBy) {
           case "type":
@@ -97,12 +78,11 @@ const ReportManagement = () => {
         console.error("Error sorting reports:", error)
         comparison = 0
       }
-
       return sortOrder === "asc" ? comparison : -comparison
     })
 
     return filtered
-  }, [reports, filters.search, filters.report_type, sortBy, sortOrder])
+  }, [reports, filters.search, sortBy, sortOrder])
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedReports.length / itemsPerPage)
@@ -133,30 +113,13 @@ const ReportManagement = () => {
     }
   }
 
-  // Handle report status update (mock function since status isn't in API)
-  const handleStatusUpdate = (report: AdminReport, newStatus: "resolved" | "dismissed") => {
-    if (!report) return
-    console.log(`Updating report "${report.reason}" to ${newStatus}`)
-    // You would implement the actual API call here
-  }
-
-  // Clear all filters
-  const clearFilters = () => {
-    setFilters({
-      report_type: "",
-      search: "",
-    })
-  }
-
   // Start editing report
   const startEdit = (report: AdminReport) => {
     if (!report) return
     setEditingReport(report)
     setEditForm({
-      status: "pending",
-      admin_notes: "",
-      suspend_user: false,
-      remove_car: false,
+      status: report.status || "pending",
+      admin_notes: report.admin_notes || "",
     })
   }
 
@@ -166,62 +129,57 @@ const ReportManagement = () => {
     setEditForm({
       status: "pending",
       admin_notes: "",
-      suspend_user: false,
-      remove_car: false,
     })
   }
 
-  // Save report changes
+  // Save report changes - fixed to match your API structure
   const saveReport = () => {
-    if (!editingReport) return
+    if (!editingReport || !editingReport.id) return
 
-    // Create updates object
-    const updates: any = {
+    // Create payload matching your UpdateReportPayload interface
+    const payload: {
+      status?: "pending" | "resolved" | "dismissed"
+      admin_notes?: string
+    } = {
       status: editForm.status,
-      admin_notes: editForm.admin_notes,
     }
 
-    // Add conditional fields based on report type and status
-    if (editForm.status === "resolved") {
-      if (editingReport.report_type === "user" && editForm.suspend_user) {
-        updates.suspend_user = true
-      }
-      if (editingReport.report_type === "car" && editForm.remove_car) {
-        updates.remove_car = true
-      }
+    // Only add admin_notes if it's not empty
+    if (editForm.admin_notes.trim()) {
+      payload.admin_notes = editForm.admin_notes.trim()
     }
 
-    console.log("Saving report updates:", updates)
-    cancelEdit()
+    console.log("Updating report:", editingReport.id, "with payload:", payload)
+
+    updateReport.mutate(
+      {
+        report_id: editingReport.id,
+        payload: payload, // Changed from 'updates' to 'payload' to match your API
+      },
+      {
+        onSuccess: (data) => {
+          console.log("Report updated successfully:", data)
+          cancelEdit()
+        },
+        onError: (error) => {
+          console.error("Failed to update report:", error)
+        },
+      },
+    )
   }
 
   // Get report type badge styling
   const getTypeBadge = (type: string) => {
-    switch (type) {
-      case "user":
-        return "bg-blue-100 text-blue-800"
-      case "car":
-        return "bg-purple-100 text-purple-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+    return "bg-purple-100 text-purple-800"
   }
 
   const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "user":
-        return <User className="h-4 w-4 text-blue-500" />
-      case "car":
-        return <Car className="h-4 w-4 text-purple-500" />
-      default:
-        return <AlertTriangle className="h-4 w-4 text-gray-500" />
-    }
+    return <Car className="h-4 w-4 text-purple-500" />
   }
 
   // Safe report count calculations
   const totalReports = reports?.length || 0
-  const userReports = reports?.filter((report) => report?.report_type === "user").length || 0
-  const carReports = reports?.filter((report) => report?.report_type === "car").length || 0
+  const carReports = reports?.filter((report) => report.report_type === "car").length || 0
 
   if (isLoading) {
     return (
@@ -267,22 +225,13 @@ const ReportManagement = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center">
               <AlertTriangle className="h-8 w-8 text-amber-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Reports</p>
                 <p className="text-2xl font-semibold text-gray-900">{totalReports}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <User className="h-8 w-8 text-blue-500" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">User Reports</p>
-                <p className="text-2xl font-semibold text-gray-900">{userReports}</p>
               </div>
             </div>
           </div>
@@ -305,7 +254,7 @@ const ReportManagement = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="Search by reason or type..."
+                placeholder="Search by reason..."
                 value={filters.search || ""}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
@@ -318,15 +267,17 @@ const ReportManagement = () => {
               <div className="flex border border-gray-300 rounded-md">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 ${viewMode === "grid" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
-                    }`}
+                  className={`p-2 ${
+                    viewMode === "grid" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
+                  }`}
                 >
                   <Grid className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 ${viewMode === "list" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
-                    }`}
+                  className={`p-2 ${
+                    viewMode === "list" ? "bg-amber-500 text-white" : "text-gray-500 hover:text-gray-700"
+                  }`}
                 >
                   <List className="h-4 w-4" />
                 </button>
@@ -334,52 +285,7 @@ const ReportManagement = () => {
             </div>
           </div>
 
-          {/* Filter Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Report Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
-              <select
-                value={filters.report_type || ""}
-                onChange={(e) => handleFilterChange("report_type", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-              >
-                <option value="">All Types</option>
-                <option value="user">User Reports</option>
-                <option value="car">Car Reports</option>
-              </select>
-            </div>
-
-            {/* Sort Options */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-              <select
-                value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
-                  const [field, order] = e.target.value.split("-") as [typeof sortBy, typeof sortOrder]
-                  setSortBy(field)
-                  setSortOrder(order)
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-              >
-                <option value="type-asc">Type A-Z</option>
-                <option value="type-desc">Type Z-A</option>
-                <option value="reason-asc">Reason A-Z</option>
-                <option value="reason-desc">Reason Z-A</option>
-              </select>
-            </div>
-
-            <div></div>
-          </div>
-
-          {/* Filter Actions */}
           <div className="mt-4 flex items-center justify-between">
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-            >
-              Clear Filters
-            </button>
             <div className="text-sm text-gray-600">
               Showing {paginatedReports.length} of {filteredAndSortedReports.length} reports
             </div>
@@ -391,10 +297,9 @@ const ReportManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedReports.map((report, index) => {
               if (!report) return null
-
               return (
                 <div
-                  key={`${report.reason}-${index}`}
+                  key={`${report.id || index}`}
                   className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
                 >
                   <div className="p-6">
@@ -403,12 +308,14 @@ const ReportManagement = () => {
                       <div className="flex items-center">
                         {getTypeIcon(report.report_type || "")}
                         <span
-                          className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getTypeBadge(report.report_type || "")}`}
+                          className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getTypeBadge(
+                            report.report_type || "",
+                          )}`}
                         >
                           {report.report_type || "Unknown"}
                         </span>
                       </div>
-                      <span className="text-xs text-gray-500">#{startIndex + index + 1}</span>
+                      <span className="text-xs text-gray-500">#{report.id || startIndex + index + 1}</span>
                     </div>
 
                     {/* Report Content */}
@@ -419,47 +326,42 @@ const ReportManagement = () => {
                         <p className="text-sm font-medium text-gray-900">{report.reason || "No reason provided"}</p>
                       </div>
 
-                      {/* Reported Subject */}
+                      {/* Status */}
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Status</p>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            report.status === "resolved"
+                              ? "bg-green-100 text-green-800"
+                              : report.status === "dismissed"
+                                ? "bg-gray-100 text-gray-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {report.status || "pending"}
+                        </span>
+                      </div>
+
+                      {/* Reported IDs */}
                       <div className="p-3 bg-red-50 rounded-md">
-                        <p className="text-xs text-gray-500 mb-2">
-                          {report.report_type === "user" ? "Reported User ID" : "Reported Car ID"}
-                        </p>
-                        <div className="flex items-center">
-                          {report.report_type === "user" ? (
-                            <UserX className="h-5 w-5 text-red-500 mr-2" />
-                          ) : (
-                            <Car className="h-5 w-5 text-red-500 mr-2" />
+                        <p className="text-xs text-gray-500 mb-2">Reported Items</p>
+                        <div className="text-sm space-y-1">
+                          {report.reported_car_id && (
+                            <p>
+                              <span className="font-medium">Car ID:</span> {report.reported_car_id}
+                            </p>
                           )}
-                          <p className="text-sm font-medium text-gray-900">
-                            {report.report_type === "user"
-                              ? report.reported_user_id?.toString() || "N/A"
-                              : report.reported_car_id?.toString() || "N/A"}
-                          </p>
+                          {report.reported_user_id && (
+                            <p>
+                              <span className="font-medium">User ID:</span> {report.reported_user_id}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="mt-6 space-y-2">
-                      {/* Quick Status Actions */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleStatusUpdate(report, "resolved")}
-                          className="flex-1 flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Resolve
-                        </button>
-                        <button
-                          onClick={() => handleStatusUpdate(report, "dismissed")}
-                          className="flex-1 flex items-center justify-center px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm font-medium"
-                        >
-                          <X className="h-4 w-4 mr-1" />
-                          Dismiss
-                        </button>
-                      </div>
-
-                      {/* Secondary Actions */}
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowDetailsModal(report)}
@@ -490,7 +392,7 @@ const ReportManagement = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      #
+                      ID
                     </th>
                     <th
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
@@ -505,7 +407,7 @@ const ReportManagement = () => {
                       Reason {sortBy === "reason" && (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Subject ID
+                      Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -515,15 +417,18 @@ const ReportManagement = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedReports.map((report, index) => {
                     if (!report) return null
-
                     return (
-                      <tr key={`${report.reason}-${index}`} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{startIndex + index + 1}</td>
+                      <tr key={`${report.id || index}`} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          #{report.id || startIndex + index + 1}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             {getTypeIcon(report.report_type || "")}
                             <span
-                              className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getTypeBadge(report.report_type || "")}`}
+                              className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getTypeBadge(
+                                report.report_type || "",
+                              )}`}
                             >
                               {report.report_type || "Unknown"}
                             </span>
@@ -534,27 +439,21 @@ const ReportManagement = () => {
                             {report.reason || "No reason provided"}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {report.report_type === "user"
-                            ? report.reported_user_id?.toString() || "N/A"
-                            : report.reported_car_id?.toString() || "N/A"}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              report.status === "resolved"
+                                ? "bg-green-100 text-green-800"
+                                : report.status === "dismissed"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {report.status || "pending"}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleStatusUpdate(report, "resolved")}
-                              className="text-green-600 hover:text-green-900"
-                              title="Resolve"
-                            >
-                              <Check className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleStatusUpdate(report, "dismissed")}
-                              className="text-gray-600 hover:text-gray-900"
-                              title="Dismiss"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
                             <button
                               onClick={() => setShowDetailsModal(report)}
                               className="text-amber-600 hover:text-amber-900"
@@ -586,7 +485,6 @@ const ReportManagement = () => {
             <div className="text-sm text-gray-600">
               Page {currentPage} of {totalPages}
             </div>
-
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -610,15 +508,15 @@ const ReportManagement = () => {
                   } else {
                     pageNum = currentPage - 2 + i
                   }
-
                   return (
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md ${currentPage === pageNum
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                        currentPage === pageNum
                           ? "bg-amber-500 text-white"
                           : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-50"
-                        }`}
+                      }`}
                     >
                       {pageNum}
                     </button>
@@ -647,17 +545,9 @@ const ReportManagement = () => {
             </h3>
             <p className="text-gray-500 mb-6">
               {reports && reports.length > 0
-                ? "Try adjusting your search or filter criteria"
+                ? "Try adjusting your search criteria"
                 : "Reports will appear here when users submit them"}
             </p>
-            {reports && reports.length > 0 && (
-              <button
-                onClick={clearFilters}
-                className="bg-amber-500 text-white px-6 py-3 rounded-md hover:bg-amber-600 transition-colors"
-              >
-                Clear All Filters
-              </button>
-            )}
           </div>
         )}
 
@@ -681,11 +571,31 @@ const ReportManagement = () => {
                   <h4 className="text-lg font-medium text-gray-900 mb-3">Report Information</h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
+                      <span className="font-medium text-gray-900">ID:</span>{" "}
+                      <span className="text-gray-600">{showDetailsModal.id || "N/A"}</span>
+                    </div>
+                    <div>
                       <span className="font-medium text-gray-900">Type:</span>{" "}
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeBadge(showDetailsModal.report_type || "")}`}
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeBadge(
+                          showDetailsModal.report_type || "",
+                        )}`}
                       >
                         {showDetailsModal.report_type || "Unknown"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-900">Status:</span>{" "}
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          showDetailsModal.status === "resolved"
+                            ? "bg-green-100 text-green-800"
+                            : showDetailsModal.status === "dismissed"
+                              ? "bg-gray-100 text-gray-800"
+                              : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {showDetailsModal.status || "pending"}
                       </span>
                     </div>
                     <div>
@@ -695,24 +605,34 @@ const ReportManagement = () => {
                   </div>
                 </div>
 
-                {/* Reported Subject Info */}
+                {/* Reported Items */}
                 <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-3">
-                    {showDetailsModal.report_type === "user" ? "Reported User" : "Reported Car"}
-                  </h4>
+                  <h4 className="text-lg font-medium text-gray-900 mb-3">Reported Items</h4>
                   <div className="bg-red-50 p-3 rounded-md">
-                    <div className="text-sm space-y-1">
-                      <p>
-                        <span className="font-medium">
-                          {showDetailsModal.report_type === "user" ? "User ID:" : "Car ID:"}
-                        </span>{" "}
-                        {showDetailsModal.report_type === "user"
-                          ? showDetailsModal.reported_user_id?.toString() || "N/A"
-                          : showDetailsModal.reported_car_id?.toString() || "N/A"}
-                      </p>
+                    <div className="text-sm space-y-2">
+                      {showDetailsModal.reported_car_id && (
+                        <p>
+                          <span className="font-medium">Reported Car ID:</span> {showDetailsModal.reported_car_id}
+                        </p>
+                      )}
+                      {showDetailsModal.reported_user_id && (
+                        <p>
+                          <span className="font-medium">Reported User ID:</span> {showDetailsModal.reported_user_id}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
+
+                {/* Admin Notes */}
+                {showDetailsModal.admin_notes && (
+                  <div>
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Admin Notes</h4>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <p className="text-sm text-gray-700">{showDetailsModal.admin_notes}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -734,7 +654,12 @@ const ReportManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   <select
                     value={editForm.status}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        status: e.target.value as "pending" | "resolved" | "dismissed",
+                      }))
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                   >
                     <option value="pending">Pending</option>
@@ -754,52 +679,14 @@ const ReportManagement = () => {
                   />
                 </div>
 
-                {/* Conditional Actions */}
-                {editForm.status === "resolved" && (
-                  <div className="space-y-3 p-3 bg-yellow-50 rounded-md">
-                    <h4 className="text-sm font-medium text-gray-900">Resolution Actions</h4>
-                    {editingReport.report_type === "user" && (
-                      <div>
-                        <label className="flex items-center text-sm">
-                          <input
-                            type="checkbox"
-                            checked={editForm.suspend_user}
-                            onChange={(e) => setEditForm((prev) => ({ ...prev, suspend_user: e.target.checked }))}
-                            className="mr-2 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                          />
-                          <span className="text-red-700 font-medium">Suspend reported user</span>
-                        </label>
-                        <p className="text-xs text-gray-600 ml-6">
-                          This will suspend the reported user's account immediately
-                        </p>
-                      </div>
-                    )}
-                    {editingReport.report_type === "car" && (
-                      <div>
-                        <label className="flex items-center text-sm">
-                          <input
-                            type="checkbox"
-                            checked={editForm.remove_car}
-                            onChange={(e) => setEditForm((prev) => ({ ...prev, remove_car: e.target.checked }))}
-                            className="mr-2 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                          />
-                          <span className="text-red-700 font-medium">Remove reported car</span>
-                        </label>
-                        <p className="text-xs text-gray-600 ml-6">
-                          This will remove the reported car from the platform immediately
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={saveReport}
-                    className="flex-1 flex items-center justify-center px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors font-medium"
+                    disabled={updateReport.isPending}
+                    className="flex-1 flex items-center justify-center px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:opacity-50 transition-colors font-medium"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+                    {updateReport.isPending ? "Saving..." : "Save Changes"}
                   </button>
                   <button
                     onClick={cancelEdit}

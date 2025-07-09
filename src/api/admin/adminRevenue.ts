@@ -1,8 +1,9 @@
+// adminRevenue.ts
 import { useQuery } from "@tanstack/react-query"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
-interface RevenueData {
+export interface RevenueData {
   period: string
   total_revenue: string
   booking_count: number
@@ -11,7 +12,7 @@ interface RevenueData {
   growth_rate?: number
 }
 
-interface RevenueStats {
+export interface RevenueStats {
   total_revenue: string
   total_bookings: number
   total_commission: string
@@ -20,7 +21,7 @@ interface RevenueStats {
   booking_growth: number
 }
 
-interface RevenueResponse {
+export interface RevenueResponse {
   stats: RevenueStats
   data: RevenueData[]
   period_type: "daily" | "weekly" | "monthly" | "yearly"
